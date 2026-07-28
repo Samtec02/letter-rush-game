@@ -1,0 +1,2377 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>⚡ Letter Rush – Word Swap</title>
+    <!-- Google Fonts for a modern, playful look -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+    <style>
+        /* ---------- RESET & BASE ---------- */
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Nunito', 'Segoe UI', sans-serif;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+            margin: 0;
+            /* Vibrant animated background */
+            background: radial-gradient(circle at 10% 20%, #0b1120, #1a2639);
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        /* Animated glowing orbs in the background */
+        body::before,
+        body::after {
+            content: '';
+            position: fixed;
+            border-radius: 50%;
+            filter: blur(80px);
+            opacity: 0.15;
+            z-index: 0;
+            animation: float 12s ease-in-out infinite alternate;
+        }
+
+        body::before {
+            width: 600px;
+            height: 600px;
+            background: #f093fb;
+            top: -150px;
+            left: -150px;
+        }
+
+        body::after {
+            width: 500px;
+            height: 500px;
+            background: #4facfe;
+            bottom: -100px;
+            right: -100px;
+            animation-delay: 4s;
+        }
+
+        @keyframes float {
+            0% {
+                transform: translate(0, 0) scale(1);
+            }
+            100% {
+                transform: translate(80px, 60px) scale(1.2);
+            }
+        }
+
+        /* ---------- GAME CONTAINER ---------- */
+        .game-container {
+            position: relative;
+            z-index: 1;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(24px);
+            -webkit-backdrop-filter: blur(24px);
+            border-radius: 56px;
+            padding: 28px 32px 36px;
+            width: 100%;
+            max-width: 680px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            box-shadow: 0 30px 60px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 255, 255, 0.06) inset;
+            transition: all 0.3s ease;
+        }
+
+        /* ---------- HEADER ---------- */
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .header h1 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 28px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #f7971e, #ffd200, #f7971e);
+            background-size: 200% 200%;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            animation: shimmer 3s ease-in-out infinite;
+            letter-spacing: -0.5px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        @keyframes shimmer {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        .header h1 .emoji {
+            -webkit-text-fill-color: initial;
+            font-size: 32px;
+        }
+
+        .level-badge {
+            background: linear-gradient(135deg, rgba(255, 215, 100, 0.25), rgba(255, 170, 80, 0.15));
+            padding: 6px 18px;
+            border-radius: 40px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffd966;
+            border: 1px solid rgba(255, 215, 100, 0.2);
+            white-space: nowrap;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            backdrop-filter: blur(4px);
+            box-shadow: 0 0 20px rgba(255, 215, 100, 0.05);
+        }
+
+        .level-badge .letters {
+            color: #7eddd6;
+            font-weight: 800;
+            background: rgba(78, 205, 196, 0.15);
+            padding: 2px 10px;
+            border-radius: 30px;
+        }
+
+        .level-timer {
+            font-size: 16px;
+            font-weight: 700;
+            color: #b0c4e8;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 4px 14px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            white-space: nowrap;
+            font-variant-numeric: tabular-nums;
+            box-shadow: 0 0 15px rgba(0, 200, 255, 0.05);
+        }
+
+        .turn-area {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+            flex-wrap: wrap;
+        }
+
+        .turn-indicator {
+            font-size: 14px;
+            font-weight: 700;
+            padding: 6px 20px;
+            border-radius: 40px;
+            background: rgba(255, 255, 255, 0.04);
+            color: #c8d8f0;
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            transition: all 0.3s;
+            white-space: nowrap;
+            text-shadow: 0 0 10px rgba(255, 255, 255, 0.05);
+        }
+
+        .turn-indicator.player-turn {
+            background: rgba(78, 205, 196, 0.15);
+            color: #7eddd6;
+            border-color: rgba(78, 205, 196, 0.3);
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.08), 0 0 60px rgba(78, 205, 196, 0.04);
+        }
+
+        .turn-indicator.computer-turn {
+            background: rgba(255, 170, 80, 0.12);
+            color: #fbb85e;
+            border-color: rgba(255, 170, 80, 0.2);
+            box-shadow: 0 0 30px rgba(255, 170, 80, 0.05);
+        }
+
+        .timer-display {
+            font-size: 28px;
+            font-weight: 800;
+            color: #f0f4fe;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 2px 22px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            min-width: 76px;
+            text-align: center;
+            font-variant-numeric: tabular-nums;
+            font-family: 'Fredoka One', cursive;
+            text-shadow: 0 0 20px rgba(78, 205, 196, 0.1);
+            transition: all 0.3s ease;
+        }
+
+        .timer-display.warning {
+            color: #ff6b6b;
+            border-color: rgba(255, 90, 90, 0.3);
+            box-shadow: 0 0 40px rgba(255, 90, 90, 0.15);
+            animation: pulse 0.6s ease-in-out infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% {
+                transform: scale(1);
+                opacity: 1;
+            }
+            100% {
+                transform: scale(1.05);
+                opacity: 0.7;
+            }
+        }
+
+        /* ---------- PROGRESS SECTION ---------- */
+        .progress-section {
+            margin-bottom: 16px;
+            padding: 0 4px;
+        }
+
+        .progress-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 6px;
+        }
+
+        .progress-label {
+            font-size: 15px;
+            font-weight: 700;
+            color: #b0c4e8;
+            letter-spacing: 0.3px;
+        }
+
+        .progress-label .count {
+            color: #f0f4fe;
+            font-size: 20px;
+            font-weight: 800;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0 12px;
+            border-radius: 30px;
+        }
+
+        .progress-bar-bg {
+            width: 100%;
+            height: 10px;
+            background: rgba(255, 255, 255, 0.06);
+            border-radius: 20px;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            box-shadow: 0 0 20px rgba(0, 200, 255, 0.03);
+        }
+
+        .progress-bar-fill {
+            height: 100%;
+            border-radius: 20px;
+            transition: width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+            width: 0%;
+            background: linear-gradient(90deg, #f093fb, #f5576c, #4facfe, #00f2fe);
+            background-size: 300% 100%;
+            animation: gradientMove 3s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.2);
+        }
+
+        @keyframes gradientMove {
+            0%,
+            100% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+        }
+
+        /* ---------- WORD DISPLAY ---------- */
+        .word-display {
+            display: flex;
+            justify-content: center;
+            gap: 14px;
+            padding: 28px 10px 32px;
+            flex-wrap: wrap;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 32px;
+            margin-bottom: 16px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            min-height: 110px;
+            align-items: center;
+            box-shadow: 0 0 40px rgba(0, 0, 0, 0.2);
+        }
+
+        .letter-tile {
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            width: 62px;
+            height: 70px;
+            font-size: 38px;
+            font-weight: 800;
+            font-family: 'Fredoka One', cursive;
+            color: #fff;
+            text-transform: uppercase;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            border-radius: 18px;
+            border: 2px solid rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.05) inset;
+            user-select: none;
+            position: relative;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Vibrant rainbow tiles */
+        .letter-tile:nth-child(6n+1) {
+            background: linear-gradient(145deg, #ff6b6b, #ee5a24);
+            box-shadow: 0 8px 24px rgba(238, 90, 36, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .letter-tile:nth-child(6n+2) {
+            background: linear-gradient(145deg, #feca57, #f9ca24);
+            box-shadow: 0 8px 24px rgba(249, 202, 36, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .letter-tile:nth-child(6n+3) {
+            background: linear-gradient(145deg, #48dbfb, #0abde3);
+            box-shadow: 0 8px 24px rgba(10, 189, 227, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .letter-tile:nth-child(6n+4) {
+            background: linear-gradient(145deg, #1dd1a1, #10ac84);
+            box-shadow: 0 8px 24px rgba(16, 172, 132, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .letter-tile:nth-child(6n+5) {
+            background: linear-gradient(145deg, #a29bfe, #6c5ce7);
+            box-shadow: 0 8px 24px rgba(108, 92, 231, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+        .letter-tile:nth-child(6n+6) {
+            background: linear-gradient(145deg, #fd79a8, #e84393);
+            box-shadow: 0 8px 24px rgba(232, 67, 147, 0.3), 0 0 0 1px rgba(255, 255, 255, 0.1) inset;
+        }
+
+        .letter-tile.highlight-remove {
+            filter: brightness(1.5) saturate(0.5);
+            transform: scale(0.85) rotate(-5deg);
+            border-color: #ff6b6b;
+            box-shadow: 0 0 40px rgba(255, 90, 90, 0.4);
+        }
+
+        .letter-tile.highlight-add {
+            filter: brightness(1.5);
+            transform: scale(1.12) rotate(3deg);
+            border-color: #7eddd6;
+            box-shadow: 0 0 50px rgba(78, 205, 196, 0.5);
+        }
+
+        .letter-tile.clickable {
+            cursor: pointer;
+            transition: all 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .letter-tile.clickable:hover {
+            transform: translateY(-6px) scale(1.04);
+            filter: brightness(1.15);
+            border-color: rgba(255, 255, 255, 0.3);
+            box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4);
+        }
+
+        .letter-tile.clickable:active {
+            transform: scale(0.92);
+            filter: brightness(0.9);
+        }
+
+        /* ---------- MESSAGE AREA ---------- */
+        .message-area {
+            text-align: center;
+            min-height: 50px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 14px;
+            padding: 0 6px;
+        }
+
+        .message {
+            font-size: 16px;
+            font-weight: 700;
+            color: #c8d8f0;
+            background: rgba(0, 0, 0, 0.2);
+            padding: 8px 28px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            transition: all 0.3s ease;
+            width: 100%;
+            text-align: center;
+            backdrop-filter: blur(4px);
+        }
+
+        .message.success {
+            color: #7eddd6;
+            background: rgba(78, 205, 196, 0.1);
+            border-color: rgba(78, 205, 196, 0.15);
+            box-shadow: 0 0 30px rgba(78, 205, 196, 0.05);
+        }
+
+        .message.error {
+            color: #ff8a8a;
+            background: rgba(255, 90, 90, 0.08);
+            border-color: rgba(255, 90, 90, 0.12);
+        }
+
+        .message.info {
+            color: #fbb85e;
+            background: rgba(255, 170, 80, 0.08);
+            border-color: rgba(255, 170, 80, 0.12);
+        }
+
+        .message.game-over {
+            color: #ffb3b3;
+            background: rgba(255, 200, 200, 0.06);
+            border-color: rgba(255, 200, 200, 0.08);
+            font-size: 20px;
+            font-weight: 800;
+        }
+
+        .message.level-up {
+            color: #7eddd6;
+            background: rgba(78, 205, 196, 0.12);
+            border-color: rgba(78, 205, 196, 0.2);
+            font-size: 20px;
+            font-weight: 800;
+            animation: bounceIn 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes bounceIn {
+            0% {
+                transform: scale(0.8);
+                opacity: 0;
+            }
+            100% {
+                transform: scale(1);
+                opacity: 1;
+            }
+        }
+
+        /* ---------- INPUT AREA ---------- */
+        .input-area {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 14px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .input-area input {
+            flex: 1;
+            min-width: 140px;
+            padding: 14px 22px;
+            font-size: 22px;
+            font-weight: 700;
+            font-family: 'Nunito', sans-serif;
+            border-radius: 20px;
+            border: 2px solid rgba(255, 255, 255, 0.08);
+            background: rgba(0, 0, 0, 0.3);
+            color: #f0f4fe;
+            outline: none;
+            transition: all 0.25s ease;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.1);
+        }
+
+        .input-area input::placeholder {
+            color: rgba(255, 255, 255, 0.15);
+            font-weight: 600;
+            font-size: 18px;
+            letter-spacing: 0;
+            text-transform: none;
+        }
+
+        .input-area input:focus {
+            border-color: rgba(78, 205, 196, 0.4);
+            background: rgba(0, 0, 0, 0.4);
+            box-shadow: 0 0 40px rgba(78, 205, 196, 0.06), 0 0 0 1px rgba(78, 205, 196, 0.1) inset;
+        }
+
+        .input-area input:disabled {
+            opacity: 0.3;
+            cursor: not-allowed;
+        }
+
+        .btn {
+            padding: 14px 28px;
+            font-size: 18px;
+            font-weight: 800;
+            font-family: 'Nunito', sans-serif;
+            border: none;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            min-width: 90px;
+            letter-spacing: 0.5px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::after {
+            content: '';
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+            pointer-events: none;
+            border-radius: 20px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #00f2fe, #4facfe);
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(79, 172, 254, 0.25);
+        }
+
+        .btn-primary:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(79, 172, 254, 0.35);
+        }
+
+        .btn-primary:active:not(:disabled) {
+            transform: scale(0.95);
+        }
+
+        .btn-primary:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+
+        .btn-secondary {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: #fff;
+            box-shadow: 0 8px 32px rgba(245, 87, 108, 0.2);
+        }
+
+        .btn-secondary:hover:not(:disabled) {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(245, 87, 108, 0.3);
+        }
+
+        .btn-restart {
+            background: linear-gradient(135deg, #f7971e, #ffd200);
+            color: #1a2639;
+            box-shadow: 0 8px 32px rgba(247, 151, 30, 0.25);
+            padding: 16px 44px;
+            font-size: 20px;
+        }
+
+        .btn-restart:hover {
+            transform: translateY(-4px) scale(1.02);
+            box-shadow: 0 12px 40px rgba(247, 151, 30, 0.35);
+        }
+
+        .btn-restart:active {
+            transform: scale(0.95);
+        }
+
+        /* ---------- STATS ---------- */
+        .stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 4px 4px;
+            margin-top: 6px;
+            border-top: 1px solid rgba(255, 255, 255, 0.04);
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+
+        .score-group {
+            display: flex;
+            gap: 28px;
+            flex-wrap: wrap;
+        }
+
+        .score-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 16px;
+            font-weight: 700;
+            color: #b0c4e8;
+        }
+
+        .score-item .score-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #f0f4fe;
+            min-width: 32px;
+            text-align: center;
+            font-family: 'Fredoka One', cursive;
+            background: rgba(255, 255, 255, 0.03);
+            padding: 0 8px;
+            border-radius: 12px;
+        }
+
+        .score-item .score-label {
+            opacity: 0.7;
+            font-weight: 600;
+        }
+
+        .score-item .badge {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            margin-right: 4px;
+            box-shadow: 0 0 16px rgba(255, 255, 255, 0.1);
+        }
+
+        .badge-player {
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+        }
+        .badge-computer {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+        }
+
+        .move-counter {
+            font-size: 15px;
+            color: #8899bb;
+            font-weight: 700;
+            background: rgba(0, 0, 0, 0.15);
+            padding: 4px 20px;
+            border-radius: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+        }
+
+        /* ---------- USED WORDS ---------- */
+        .used-words {
+            margin-top: 14px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            align-items: center;
+            padding: 10px 16px;
+            background: rgba(0, 0, 0, 0.15);
+            border-radius: 18px;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            min-height: 38px;
+        }
+
+        .used-words-label {
+            font-size: 12px;
+            font-weight: 700;
+            color: #667799;
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-right: 6px;
+        }
+
+        .used-word-tag {
+            font-size: 14px;
+            font-weight: 600;
+            color: #b0c4e8;
+            background: rgba(255, 255, 255, 0.04);
+            padding: 4px 16px;
+            border-radius: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.04);
+            text-transform: lowercase;
+            transition: all 0.2s ease;
+        }
+
+        .used-word-tag.current {
+            color: #7eddd6;
+            border-color: rgba(78, 205, 196, 0.15);
+            background: rgba(78, 205, 196, 0.06);
+            box-shadow: 0 0 20px rgba(78, 205, 196, 0.05);
+        }
+
+        /* ---------- GAME OVER OVERLAY ---------- */
+        .game-over-overlay {
+            display: none;
+            text-align: center;
+            padding: 20px 10px 8px;
+        }
+
+        .game-over-overlay.visible {
+            display: block;
+            animation: fadeUp 0.6s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes fadeUp {
+            0% {
+                opacity: 0;
+                transform: translateY(30px) scale(0.95);
+            }
+            100% {
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        .game-over-overlay h2 {
+            font-family: 'Fredoka One', cursive;
+            font-size: 34px;
+            font-weight: 700;
+            color: #f0f4fe;
+            margin-bottom: 6px;
+            text-shadow: 0 0 40px rgba(255, 255, 255, 0.05);
+        }
+
+        .game-over-overlay .sub {
+            font-size: 18px;
+            font-weight: 600;
+            color: #b0c4e8;
+            margin-bottom: 20px;
+        }
+
+        /* ---------- WINNER CELEBRATION ---------- */
+        .celebration {
+            display: none;
+            text-align: center;
+            padding: 14px 0 8px;
+        }
+
+        .celebration.visible {
+            display: block;
+            animation: confettiDrop 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        @keyframes confettiDrop {
+            0% {
+                opacity: 0;
+                transform: scale(0.8) rotate(-3deg);
+            }
+            100% {
+                opacity: 1;
+                transform: scale(1) rotate(0);
+            }
+        }
+
+        .celebration .big-emoji {
+            font-size: 72px;
+            display: block;
+            margin-bottom: 6px;
+            animation: bounceIn 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+        }
+
+        .celebration .win-title {
+            font-family: 'Fredoka One', cursive;
+            font-size: 42px;
+            font-weight: 700;
+            background: linear-gradient(135deg, #ffd700, #ff6b6b, #4facfe);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            background-size: 300% 100%;
+            animation: shimmer 2s ease-in-out infinite;
+            text-shadow: none;
+        }
+
+        .celebration .win-sub {
+            font-size: 20px;
+            font-weight: 600;
+            color: #b0c4e8;
+            margin-top: 6px;
+        }
+
+        /* ---------- RESPONSIVE ---------- */
+        @media (max-width: 580px) {
+            .game-container {
+                padding: 20px 16px 24px;
+                border-radius: 40px;
+            }
+
+            .header h1 {
+                font-size: 22px;
+            }
+            .header h1 .emoji {
+                font-size: 24px;
+            }
+
+            .level-badge {
+                font-size: 13px;
+                padding: 4px 14px;
+                gap: 8px;
+            }
+            .level-timer {
+                font-size: 13px;
+                padding: 2px 10px;
+            }
+
+            .letter-tile {
+                width: 48px;
+                height: 54px;
+                font-size: 28px;
+                border-radius: 14px;
+            }
+
+            .word-display {
+                gap: 8px;
+                padding: 18px 6px 22px;
+                min-height: 80px;
+            }
+
+            .input-area input {
+                font-size: 18px;
+                padding: 12px 16px;
+                min-width: 100px;
+            }
+
+            .btn {
+                padding: 12px 20px;
+                font-size: 16px;
+                min-width: 70px;
+            }
+
+            .score-group {
+                gap: 18px;
+            }
+            .score-item .score-value {
+                font-size: 20px;
+            }
+
+            .stats {
+                flex-direction: column;
+                align-items: stretch;
+                gap: 6px;
+            }
+            .move-counter {
+                text-align: center;
+            }
+
+            .turn-indicator {
+                font-size: 12px;
+                padding: 4px 14px;
+            }
+            .timer-display {
+                font-size: 22px;
+                padding: 2px 16px;
+                min-width: 60px;
+            }
+
+            .message {
+                font-size: 14px;
+                padding: 6px 16px;
+            }
+
+            .progress-label {
+                font-size: 13px;
+            }
+            .progress-label .count {
+                font-size: 16px;
+            }
+
+            .celebration .big-emoji {
+                font-size: 52px;
+            }
+            .celebration .win-title {
+                font-size: 30px;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .letter-tile {
+                width: 40px;
+                height: 46px;
+                font-size: 22px;
+                border-radius: 10px;
+            }
+            .word-display {
+                gap: 5px;
+                padding: 14px 4px 18px;
+            }
+            .input-area input {
+                font-size: 16px;
+                padding: 10px 12px;
+                min-width: 70px;
+            }
+            .btn {
+                padding: 10px 14px;
+                font-size: 14px;
+                min-width: 60px;
+            }
+            .header h1 {
+                font-size: 18px;
+            }
+            .level-badge {
+                font-size: 11px;
+                padding: 3px 10px;
+            }
+            .level-timer {
+                font-size: 11px;
+                padding: 1px 8px;
+            }
+            .turn-area {
+                gap: 8px;
+            }
+            .timer-display {
+                font-size: 18px;
+                padding: 2px 12px;
+                min-width: 50px;
+            }
+            .game-over-overlay h2 {
+                font-size: 26px;
+            }
+            .celebration .big-emoji {
+                font-size: 44px;
+            }
+            .celebration .win-title {
+                font-size: 24px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container" id="app">
+        <!-- HEADER -->
+        <div class="header">
+            <div class="header-left">
+                <h1>
+                    <span class="emoji">⚡</span> Letter Rush
+                </h1>
+                <div class="level-badge" id="levelBadge">
+                    Level <span id="levelNum">1</span> · <span class="letters" id="levelLetters">3</span> letters
+                    <span class="level-timer" id="levelTimerDisplay">⏱️ 2:00</span>
+                </div>
+            </div>
+            <div class="turn-area">
+                <div class="turn-indicator" id="turnIndicator">● Your Turn</div>
+                <div class="timer-display" id="turnTimerDisplay">30</div>
+            </div>
+        </div>
+
+        <!-- PROGRESS -->
+        <div class="progress-section">
+            <div class="progress-row">
+                <span class="progress-label">📖 Words <span class="count" id="progressCount">0 / 10</span></span>
+                <span class="progress-label" id="levelStatus">Level 1</span>
+            </div>
+            <div class="progress-bar-bg">
+                <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+            </div>
+        </div>
+
+        <!-- WORD DISPLAY -->
+        <div class="word-display" id="wordDisplay"></div>
+
+        <!-- MESSAGE -->
+        <div class="message-area">
+            <div class="message" id="message">Swap one letter – 30s per turn!</div>
+        </div>
+
+        <!-- INPUT -->
+        <div class="input-area">
+            <input
+            type="text"
+            id="wordInput"
+            placeholder="New word…"
+            maxlength="6"
+            autocomplete="off"
+            autocorrect="off"
+            autocapitalize="off"
+            spellcheck="false"
+            />
+            <button class="btn btn-primary" id="submitBtn">Swap</button>
+            <button class="btn btn-secondary" id="hintBtn">💡 Hint</button>
+        </div>
+
+        <!-- STATS -->
+        <div class="stats">
+            <div class="score-group">
+                <div class="score-item">
+                    <span class="badge badge-player"></span>
+                    <span class="score-label">You</span>
+                    <span class="score-value" id="playerScore">0</span>
+                </div>
+                <div class="score-item">
+                    <span class="badge badge-computer"></span>
+                    <span class="score-label">Comp</span>
+                    <span class="score-value" id="computerScore">0</span>
+                </div>
+            </div>
+            <div class="move-counter" id="moveCounter">Moves 0</div>
+        </div>
+
+        <!-- USED WORDS -->
+        <div class="used-words" id="usedWords">
+            <span class="used-words-label">📝 used:</span>
+        </div>
+
+        <!-- CELEBRATION (All levels complete) -->
+        <div class="celebration" id="celebration">
+            <span class="big-emoji">🏆</span>
+            <div class="win-title">🌟 You Win! 🌟</div>
+            <div class="win-sub">All 4 levels complete – you're a Letter Rush champion!</div>
+        </div>
+
+        <!-- GAME OVER OVERLAY -->
+        <div class="game-over-overlay" id="gameOverOverlay">
+            <h2 id="gameOverTitle">🏆 Game Over</h2>
+            <div class="sub" id="gameOverSub">What a match!</div>
+            <button class="btn btn-restart" id="restartBtn">🔄 Play Again</button>
+        </div>
+    </div>
+
+    <script>
+        // ============================================================
+        //  DICTIONARY (filtered to 3–6 letters) – SAME AS BEFORE
+        // ============================================================
+        const RAW_WORDS = [
+            // 3-letter
+            'ace', 'act', 'add', 'age', 'ago', 'aid', 'aim', 'air', 'all', 'and', 'ant', 'any', 'ape', 'arc', 'are',
+            'ark', 'arm', 'art', 'ash', 'ask', 'ate', 'awe', 'axe', 'bad', 'bag', 'ban', 'bar', 'bat', 'bay', 'bed',
+            'bee', 'bet', 'bid', 'big', 'bin', 'bit', 'bow', 'box', 'boy', 'bud', 'bug', 'bun', 'bus', 'but', 'buy',
+            'cab', 'cam', 'cap', 'car', 'cat', 'cop', 'cow', 'cry', 'cub', 'cup', 'cur', 'cut', 'dam', 'day', 'den',
+            'dew', 'did', 'die', 'dig', 'dim', 'dip', 'doe', 'dog', 'dot', 'dry', 'dub', 'dud', 'due', 'dug', 'dye',
+            'ear', 'eat', 'eel', 'egg', 'ego', 'elm', 'emu', 'end', 'era', 'eve', 'ewe', 'eye', 'fan', 'far', 'fat',
+            'fax', 'fed', 'fee', 'few', 'fig', 'fin', 'fir', 'fit', 'fix', 'fly', 'foe', 'for', 'fox', 'fry', 'fun',
+            'fur', 'gag', 'gal', 'gap', 'gas', 'gel', 'gem', 'get', 'gin', 'gnu', 'goa', 'goat', 'god', 'got', 'gum',
+            'gun', 'gut', 'gym', 'had', 'has', 'hat', 'hay', 'hen', 'her', 'hew', 'hex', 'hid', 'him', 'hip', 'his',
+            'hit', 'hog', 'hop', 'hot', 'how', 'hub', 'hue', 'hug', 'hum', 'hut', 'ice', 'icy', 'ill', 'imp', 'ink',
+            'inn', 'ion', 'ire', 'irk', 'its', 'ivy', 'jab', 'jag', 'jam', 'jar', 'jaw', 'jay', 'jet', 'job', 'jog',
+            'jot', 'joy', 'jug', 'jut', 'keg', 'ken', 'key', 'kid', 'kin', 'kip', 'kit', 'lab', 'lad', 'lag', 'lap',
+            'law', 'lay', 'lea', 'led', 'leg', 'let', 'lid', 'lip', 'lit', 'log', 'lot', 'low', 'mad', 'man', 'mar',
+            'mat', 'maw', 'max', 'may', 'men', 'met', 'mew', 'mid', 'mix', 'mob', 'mod', 'mom', 'mop', 'mow', 'mud',
+            'mug', 'net', 'new', 'nil', 'nip', 'nit', 'nod', 'nor', 'not', 'now', 'oak', 'oat', 'odd', 'ode', 'off',
+            'oft', 'oil', 'old', 'one', 'opt', 'orb', 'ore', 'our', 'out', 'owe', 'owl', 'own', 'pad', 'pal', 'pan',
+            'pap', 'par', 'pat', 'paw', 'pay', 'pea', 'peg', 'pen', 'pep', 'per', 'pet', 'pie', 'pig', 'pin', 'pit',
+            'ply', 'pod', 'pop', 'pot', 'pow', 'pro', 'pry', 'pub', 'pug', 'pun', 'pus', 'put', 'pyx', 'rag', 'ram',
+            'ran', 'rap', 'rat', 'raw', 'ray', 'red', 'ref', 'rep', 'rib', 'rid', 'rig', 'rim', 'rip', 'rob', 'rod',
+            'roe', 'rot', 'row', 'rub', 'rug', 'rum', 'run', 'rut', 'rye', 'sac', 'sad', 'sag', 'sap', 'sat', 'saw',
+            'sea', 'set', 'sew', 'she', 'shy', 'sin', 'sip', 'sir', 'sis', 'sit', 'six', 'ski', 'sky', 'sly', 'sob',
+            'sod', 'son', 'sot', 'sow', 'soy', 'spa', 'spy', 'sty', 'sub', 'sue', 'sum', 'sun', 'tab', 'tad', 'tag',
+            'tan', 'tap', 'tar', 'tax', 'tea', 'ted', 'ten', 'the', 'thy', 'tic', 'tie', 'tin', 'tip', 'toe', 'ton',
+            'too', 'top', 'tot', 'tow', 'toy', 'try', 'two', 'urn', 'use', 'van', 'vat', 'vet', 'vex', 'via', 'vie',
+            'vim', 'vow', 'wad', 'wag', 'war', 'was', 'wax', 'way', 'web', 'wed', 'wet', 'who', 'why', 'win', 'wit',
+            'woe', 'wok', 'wow', 'yak', 'yam', 'yap', 'yaw', 'yea', 'yes', 'yet', 'yew', 'zap', 'zen', 'zig', 'zip',
+            'zoo',
+            // 4-letter
+            'abed', 'abet', 'able', 'ably', 'abut', 'aced', 'ache', 'acid', 'acme', 'acre', 'acta', 'acts', 'adze',
+            'afar', 'aged', 'ager', 'ages', 'agon', 'aide', 'aids', 'aims', 'airy', 'ajar', 'akin', 'alar', 'alas',
+            'alee', 'ales', 'alga', 'ally', 'alma', 'aloe', 'alps', 'also', 'alto', 'amid', 'ammo', 'amok', 'anal',
+            'ands', 'anew', 'anti', 'ants', 'aped', 'aper', 'apes', 'apts', 'arch', 'area', 'argo', 'arid', 'arky',
+            'arms', 'army', 'arts', 'arty', 'ashy', 'asks', 'atom', 'atop', 'aver', 'avid', 'away', 'awed', 'awes',
+            'awry', 'axal', 'axed', 'axes', 'axle', 'baba', 'baby', 'back', 'bade', 'bail', 'bait', 'bake', 'bald',
+            'bale', 'balk', 'ball', 'balm', 'band', 'bane', 'bang', 'bank', 'barb', 'bard', 'bare', 'bark', 'barn',
+            'barp', 'base', 'bash', 'bask', 'bass', 'bate', 'bath', 'bats', 'bead', 'beak', 'beam', 'bean', 'bear',
+            'beat', 'beau', 'beck', 'beds', 'beef', 'been', 'beer', 'bees', 'belf', 'bell', 'belt', 'bend', 'beni',
+            'bent', 'berg', 'berm', 'best', 'beta', 'beth', 'bets', 'bias', 'bide', 'bids', 'bier', 'biff', 'bike',
+            'bill', 'bind', 'bine', 'bird', 'bite', 'bits', 'blab', 'blah', 'bleb', 'blew', 'blob', 'blot', 'blow',
+            'blue', 'blur', 'boar', 'boat', 'bode', 'body', 'boil', 'bold', 'bole', 'bolt', 'bomb', 'bond', 'bone',
+            'bong', 'bonk', 'boob', 'book', 'boom', 'boon', 'bore', 'born', 'boss', 'both', 'bout', 'bowl', 'bows',
+            'brad', 'brae', 'brag', 'bran', 'brat', 'bray', 'bred', 'brew', 'brim', 'brim', 'brio', 'brit', 'brod',
+            'brook', 'brow', 'buck', 'buds', 'buff', 'buggy', 'bulb', 'bulk', 'bull', 'bump', 'bunk', 'bunt', 'buoy',
+            'burk', 'burl', 'burn', 'burr', 'bury', 'bush', 'busy', 'butt', 'buys', 'buzz', 'cafe', 'cage', 'cake',
+            'calf', 'call', 'came', 'camp', 'cane', 'cape', 'card', 'care', 'cart', 'case', 'cash', 'cask', 'cast',
+            'cave', 'cell', 'chat', 'chef', 'chin', 'chip', 'chop', 'cite', 'city', 'clad', 'clam', 'clan', 'clap',
+            'claw', 'clay', 'clip', 'clod', 'clog', 'clot', 'club', 'clue', 'coal', 'coat', 'code', 'cold', 'come',
+            'cone', 'cook', 'cool', 'cope', 'copy', 'cord', 'core', 'cork', 'corn', 'cosy', 'coup', 'cove', 'cozy',
+            'crab', 'crew', 'crib', 'crop', 'crow', 'cube', 'cult', 'curb', 'cute', 'daft', 'dawn', 'dead', 'deaf',
+            'deal', 'dear', 'debt', 'deck', 'deed', 'deem', 'deep', 'deli', 'desk', 'dice', 'diet', 'dive', 'dock',
+            'does', 'dome', 'done', 'doom', 'door', 'dose', 'dove', 'down', 'doze', 'drab', 'drag', 'draw', 'drew',
+            'drip', 'drop', 'drum', 'dual', 'dude', 'duel', 'duet', 'duke', 'dull', 'duly', 'dumb', 'dump', 'dune',
+            'dung', 'dunk', 'dusk', 'dust', 'duty', 'dyed', 'dyer', 'dyes', 'each', 'earl', 'earn', 'ease', 'east',
+            'easy', 'eats', 'ebbs', 'echo', 'edge', 'edgy', 'edit', 'elks', 'else', 'emit', 'emus', 'ends', 'envy',
+            'eons', 'eras', 'even', 'ever', 'evil', 'exam', 'exec', 'exit', 'expo', 'eyed', 'eyen', 'eyes', 'face',
+            'fact', 'fade', 'fail', 'fair', 'fake', 'fall', 'fame', 'fang', 'fare', 'farm', 'fast', 'fate', 'faun',
+            'fear', 'feat', 'feed', 'feel', 'feet', 'fell', 'felt', 'fest', 'fiat', 'fief', 'file', 'fill', 'film',
+            'fine', 'fire', 'firm', 'fish', 'five', 'flag', 'flak', 'flap', 'flat', 'flea', 'fled', 'flew', 'flex',
+            'flip', 'flit', 'floe', 'flog', 'flop', 'flow', 'foam', 'foci', 'foil', 'fold', 'folk', 'fond', 'food',
+            'fool', 'foot', 'ford', 'fore', 'fork', 'form', 'fort', 'foul', 'four', 'fowl', 'free', 'frog', 'from',
+            'fuel', 'full', 'fume', 'fund', 'furl', 'fuse', 'fuss', 'fuzz', 'gala', 'game', 'gamy', 'gang', 'gape',
+            'garb', 'gash', 'gasp', 'gate', 'gave', 'gaze', 'gear', 'gene', 'germ', 'gift', 'gild', 'girl', 'give',
+            'glad', 'glib', 'glow', 'glue', 'glum', 'gnat', 'goat', 'goes', 'gold', 'golf', 'gone', 'good', 'goof',
+            'gore', 'gory', 'gosh', 'gout', 'gown', 'grab', 'gray', 'grew', 'grid', 'grim', 'grin', 'grip', 'grit',
+            'gulf', 'gull', 'gulp', 'gush', 'gust', 'guts', 'hack', 'haft', 'hail', 'hair', 'hale', 'half', 'hall',
+            'halo', 'halt', 'hand', 'hang', 'hare', 'hark', 'harm', 'hart', 'hash', 'hasp', 'hate', 'haul', 'have',
+            'haze', 'hazy', 'head', 'heal', 'heap', 'hear', 'heat', 'heed', 'heel', 'heft', 'held', 'helm', 'herb',
+            'herd', 'here', 'hero', 'hewn', 'hick', 'hide', 'high', 'hike', 'hill', 'hilt', 'hind', 'hint', 'hire',
+            'hiss', 'hits', 'hive', 'hoar', 'hoax', 'hobby', 'hobo', 'hock', 'hoed', 'hoes', 'hold', 'hole', 'holy',
+            'home', 'hone', 'hood', 'hoof', 'hook', 'hool', 'hooly', 'hope', 'horde', 'horn', 'hose', 'host', 'hour',
+            'hover', 'howl', 'huck', 'huge', 'hull', 'hump', 'hung', 'hunk', 'hunt', 'hurt', 'hush', 'husk', 'hymn',
+            'hype', 'iced', 'icon', 'idea', 'idle', 'idly', 'idol', 'iffy', 'into', 'ions', 'iota', 'iron', 'isle',
+            'itch', 'item', 'jabs', 'jack', 'jade', 'jail', 'jake', 'jamb', 'jams', 'jape', 'jars', 'jaws', 'jays',
+            'jazz', 'jean', 'jede', 'jeer', 'jell', 'jerk', 'jest', 'jews', 'jiff', 'jilt', 'jink', 'jins', 'jobs',
+            'jock', 'joes', 'jogs', 'john', 'join', 'joke', 'jolt', 'josh', 'jots', 'jowl', 'joys', 'judo', 'jugs',
+            'juke', 'jump', 'june', 'junk', 'jury', 'just', 'jute', 'kale', 'kart', 'keel', 'keen', 'keep', 'kelp',
+            'kent', 'kept', 'kerb', 'keys', 'kick', 'kill', 'kind', 'king', 'kink', 'kiss', 'kite', 'kith', 'knee',
+            'knew', 'knit', 'knob', 'knock', 'knot', 'know', 'koan', 'kohl', 'kola', 'kook', 'koto', 'kyat', 'lace',
+            'lack', 'lacy', 'lade', 'lady', 'laid', 'lain', 'lair', 'lake', 'lamb', 'lame', 'lamp', 'land', 'lane',
+            'lard', 'lark', 'lash', 'lass', 'last', 'late', 'lawn', 'lazy', 'lead', 'leaf', 'leak', 'lean', 'leap',
+            'left', 'lend', 'lens', 'lent', 'leos', 'less', 'liar', 'lice', 'lick', 'lidar', 'lied', 'lief', 'lien',
+            'life', 'lift', 'like', 'lilt', 'lily', 'limb', 'lime', 'mind', 'mine', 'mini', 'mink', 'miss', 'move',
+            'much', 'mule', 'mull', 'murk', 'muse', 'mush', 'must', 'mute', 'myth', 'nail', 'nape', 'navy', 'near',
+            'neat', 'neck', 'need', 'neon', 'news', 'next', 'nice', 'nine', 'node', 'none', 'noon', 'norm', 'nose',
+            'note', 'noun', 'null', 'nuts', 'oath', 'obey', 'odds', 'oils', 'oily', 'oink', 'okay', 'omen', 'omit',
+            'once', 'ones', 'only', 'onto', 'ooze', 'oops', 'opal', 'open', 'oral', 'orca', 'ores', 'ouch', 'ours',
+            'oust', 'oven', 'over', 'owes', 'owls', 'owns', 'pace', 'pack', 'pact', 'page', 'paid', 'pain', 'pair',
+            'pale', 'pall', 'palm', 'pane', 'pang', 'rank', 'rant', 'rare', 'rash', 'rate', 'rave', 'raws', 'rays',
+            'read', 'real', 'ream', 'reap', 'rear', 'reed', 'reef', 'reel', 'rein', 'rely', 'rend', 'rent', 'repo',
+            'rest', 'rich', 'ride', 'rift', 'rill', 'rime', 'ring', 'rink', 'riot', 'ripe', 'rise', 'risk', 'rite',
+            'road', 'roam', 'roar', 'robe', 'rock', 'role', 'roll', 'roof', 'room', 'root', 'rope', 'rose', 'rosy',
+            'rote', 'roux', 'rove', 'rows', 'rube', 'ruby', 'rude', 'ruin', 'rule', 'rump', 'rung', 'runs', 'ruse',
+            'rush', 'rusk', 'rust', 'ruts', 'sack', 'sail', 'sake', 'sale', 'salt', 'same', 'sand', 'sane', 'sang',
+            'sank', 'sash', 'sass', 'save', 'seal', 'seam', 'sear', 'seat', 'seed', 'seek', 'seem', 'seen', 'seer',
+            'self', 'sell', 'semi', 'send', 'sent', 'sept', 'serf', 'serum', 'seta', 'sewn', 'shag', 'shah', 'sham',
+            'shan', 'shap', 'shay', 'shed', 'shim', 'shin', 'ship', 'shod', 'shoe', 'shoo', 'shop', 'shot', 'show',
+            'shun', 'shut', 'sick', 'side', 'sift', 'sigh', 'sign', 'silk', 'sill', 'silo', 'silt', 'sine', 'sink',
+            'sire', 'site', 'sits', 'size', 'skat', 'skew', 'skim', 'skin', 'skip', 'skit', 'slab', 'slag', 'slam',
+            'slap', 'slat', 'slay', 'sled', 'slew', 'slid', 'slim', 'slip', 'slit', 'slob', 'slog', 'slot', 'slow',
+            'slub', 'slue', 'slug', 'slum', 'slur', 'smog', 'snag', 'snap', 'snip', 'snob', 'snow', 'snub', 'snug',
+            'soak', 'soap', 'soar', 'sock', 'soda', 'sofa', 'soft', 'soil', 'sold', 'sole', 'solo', 'some', 'song',
+            'soon', 'soot', 'sore', 'sort', 'soul', 'soup', 'sour', 'sown', 'spar', 'spat', 'spay', 'sped', 'spin',
+            'spit', 'spit', 'spot', 'spry', 'spud', 'spur', 'stab', 'stag', 'star', 'stay', 'stem', 'step', 'stew',
+            'stir', 'stop', 'stub', 'stud', 'stun', 'such', 'suck', 'suds', 'sued', 'suet', 'suit', 'sulk', 'sult',
+            'sumo', 'sump', 'sung', 'sunk', 'suns', 'super', 'sure', 'surf', 'swab', 'swam', 'swan', 'swap', 'swat',
+            'sway', 'swim', 'swum', 'sync', 'tack', 'tact', 'tael', 'tail', 'take', 'tale', 'talk', 'tall', 'tame',
+            'tang', 'tank', 'tape', 'tare', 'tarn', 'taro', 'tart', 'task', 'tats', 'taut', 'taxi', 'teak', 'teal',
+            'team', 'tear', 'teat', 'tech', 'teddy', 'teen', 'tell', 'tend', 'tent', 'term', 'tern', 'test', 'text',
+            'thaw', 'thee', 'them', 'then', 'they', 'thin', 'this', 'thou', 'thud', 'thug', 'tick', 'tide', 'tidy',
+            'tied', 'tier', 'ties', 'tile', 'till', 'tilt', 'time', 'tint', 'tiny', 'tire', 'toad', 'toil', 'told',
+            'toll', 'tomb', 'tone', 'tong', 'tony', 'took', 'tool', 'toot', 'tops', 'tore', 'torn', 'tort', 'toss',
+            'tour', 'tout', 'town', 'tows', 'toyed', 'tray', 'tree', 'trek', 'trim', 'trio', 'trip', 'trod', 'trot',
+            'trou', 'trow', 'true', 'tsar', 'tube', 'tuck', 'tuff', 'tuft', 'tuna', 'tune', 'turf', 'turn', 'tush',
+            'tusk', 'twas', 'twee', 'twig', 'twin', 'twit', 'tyke', 'type', 'ugly', 'ulna', 'upon', 'urge', 'used',
+            'user', 'uses', 'vain', 'vale', 'vamp', 'vane', 'vary', 'vast', 'vats', 'vault', 'veal', 'veer', 'veil',
+            'vein', 'vend', 'vent', 'verb', 'vest', 'veto', 'vial', 'vibe', 'vice', 'view', 'vine', 'visa', 'vise',
+            'void', 'volt', 'vote', 'vows', 'wade', 'wadi', 'waif', 'wail', 'wait', 'wake', 'wale', 'walk', 'wall',
+            'wand', 'wane', 'want', 'ward', 'ware', 'warm', 'warn', 'warp', 'wart', 'wary', 'wash', 'wasp', 'wast',
+            'watt', 'wave', 'wavy', 'weak', 'weal', 'wear', 'weed', 'week', 'ween', 'weep', 'weld', 'well', 'welt',
+            'wend', 'went', 'were', 'west', 'what', 'when', 'whim', 'whip', 'whir', 'whit', 'whiz', 'whoa', 'whom',
+            'wick', 'wide', 'wife', 'wild', 'will', 'wilt', 'wily', 'wind', 'wine', 'wing', 'wink', 'wire', 'wise',
+            'wish', 'wisp', 'with', 'wits', 'woes', 'woke', 'wolf', 'womb', 'wood', 'woof', 'wool', 'word', 'wore',
+            'work', 'worm', 'worn', 'wove', 'wrap', 'wren', 'yank', 'yard', 'yarn', 'year', 'yell', 'yelp', 'yoke',
+            'yolk', 'yore', 'your', 'yowl', 'zeal', 'zero', 'zest', 'zeta', 'zone', 'zoom',
+            // 5-letter
+            'aback', 'abaft', 'abase', 'abate', 'abbey', 'abbot', 'abhor', 'abide', 'abled', 'abode', 'abort',
+            'about', 'above', 'abuse', 'abyss', 'ached', 'aches', 'acids', 'acing', 'ackee', 'acorn', 'acres',
+            'acted', 'actin', 'adapt', 'added', 'adder', 'addle', 'adept', 'adieu', 'adios', 'adits', 'adman',
+            'adobe', 'adopt', 'adore', 'adorn', 'adult', 'aegis', 'aerie', 'affix', 'afoot', 'afoul', 'after',
+            'again', 'agape', 'agate', 'agave', 'agent', 'agile', 'aging', 'aglow', 'agony', 'agree', 'ahead',
+            'aisle', 'alarm', 'album', 'alder', 'alias', 'alibi', 'alien', 'align', 'alike', 'alive', 'allay',
+            'alley', 'allot', 'allow', 'alloy', 'aloft', 'alone', 'along', 'aloof', 'aloud', 'alpha', 'altar',
+            'alter', 'amass', 'amaze', 'amber', 'amble', 'ameba', 'amiss', 'amity', 'among', 'ample', 'amply',
+            'amuse', 'angel', 'anger', 'angle', 'angry', 'angst', 'anime', 'anise', 'ankle', 'annex', 'annoy',
+            'annul', 'anode', 'anted', 'antic', 'antid', 'antis', 'anvil', 'aorta', 'apart', 'aphid', 'aping',
+            'apnea', 'apple', 'apply', 'apron', 'aptly', 'arbor', 'ardor', 'arena', 'argue', 'arise', 'armor',
+            'aroma', 'arose', 'array', 'arrow', 'arson', 'artsy', 'ascot', 'ashen', 'aside', 'askew', 'assay',
+            'asset', 'atlas', 'attic', 'audio', 'audit', 'augur', 'aunts', 'aunty', 'avail', 'avert', 'avian',
+            'avoid', 'await', 'awake', 'award', 'aware', 'awash', 'awful', 'awoke', 'axial', 'axing', 'axiom',
+            'azure', 'bacon', 'badge', 'badly', 'baker', 'basin', 'basis', 'batch', 'bathe', 'beach', 'beads',
+            'beard', 'beast', 'begin', 'begun', 'being', 'below', 'bench', 'berry', 'bible', 'birth', 'black',
+            'blade', 'blame', 'bland', 'blank', 'blast', 'blaze', 'bleed', 'blend', 'bless', 'blind', 'blink',
+            'bliss', 'blitz', 'bloat', 'block', 'blond', 'blood', 'bloom', 'blown', 'blues', 'bluff', 'blunt',
+            'blurt', 'blush', 'board', 'boast', 'bobby', 'bonus', 'boost', 'booth', 'bound', 'brain', 'brand',
+            'brass', 'brave', 'bread', 'break', 'breed', 'brick', 'bride', 'brief', 'bring', 'broad', 'broke',
+            'brook', 'broom', 'brown', 'brush', 'buddy', 'build', 'built', 'bunch', 'burst', 'buyer', 'cabin',
+            'candy', 'cards', 'cargo', 'catch', 'chain', 'chair', 'chalk', 'champ', 'chant', 'chaos', 'chard',
+            'charm', 'chart', 'chase', 'cheap', 'check', 'cheek', 'cheer', 'chess', 'chest', 'chief', 'child',
+            'chill', 'china', 'chord', 'chunk', 'civic', 'civil', 'clash', 'clean', 'clear', 'click', 'cliff',
+            'climb', 'cling', 'clock', 'clone', 'close', 'cloth', 'cloud', 'coach', 'coast', 'color', 'comet',
+            'coral', 'count', 'court', 'cover', 'crack', 'craft', 'crane', 'crash', 'crawl', 'crazy', 'cream',
+            'crest', 'crime', 'crisp', 'cross', 'crowd', 'crown', 'crush', 'curve', 'daily', 'dance', 'death',
+            'debug', 'debut', 'decay', 'dense', 'depth', 'derby', 'devil', 'diary', 'dirty', 'disco', 'ditch',
+            'dodge', 'doubt', 'dough', 'drank', 'drawo', 'dread', 'dream', 'dress', 'dried', 'drier', 'drift',
+            'drill', 'drink', 'drive', 'drone', 'drove', 'dying', 'eager', 'eagle', 'early', 'earth', 'eight',
+            'elder', 'elect', 'elite', 'embed', 'ember', 'emery', 'empty', 'enact', 'endow', 'enemy', 'enjoy',
+            'ensue', 'enter', 'entry', 'equal', 'equip', 'erode', 'error', 'erupt', 'essay', 'ether', 'ethic',
+            'evict', 'exact', 'exalt', 'exert', 'exile', 'exist', 'extra', 'fairy', 'faith', 'fancy', 'fatal',
+            'fault', 'fence', 'ferry', 'fetch', 'fever', 'fewer', 'final', 'first', 'fixed', 'flame', 'flash',
+            'fleet', 'flesh', 'float', 'focus', 'force', 'forge', 'forth', 'forum', 'found', 'frame', 'frank',
+            'fraud', 'fresh', 'front', 'frost', 'froze', 'fruit', 'ghost', 'giant', 'given', 'gladly', 'glare',
+            'glass', 'glide', 'globe', 'gloom', 'glory', 'gloss', 'glove', 'gnome', 'going', 'golds', 'grace',
+            'grade', 'grand', 'grant', 'grape', 'graph', 'grasp', 'grass', 'grave', 'great', 'green', 'greet',
+            'grief', 'grill', 'grind', 'groan', 'groom', 'gross', 'group', 'grove', 'grown', 'guard', 'guess',
+            'guide', 'guild', 'guilt', 'guise', 'happy', 'harsh', 'haste', 'haven', 'heart', 'heavy', 'hello',
+            'honey', 'honor', 'horse', 'hotel', 'house', 'human', 'humor', 'ideal', 'image', 'imply', 'inbox',
+            'incur', 'index', 'indie', 'infer', 'ingot', 'inlay', 'inlet', 'inner', 'input', 'inset', 'inter',
+            'intra', 'intro', 'ionic', 'irate', 'irony', 'islet', 'issue', 'ivory', 'jewel', 'joint', 'joker',
+            'jolly', 'joust', 'judge', 'juice', 'jumbo', 'jumpy', 'karma', 'kayak', 'kebab', 'kendo', 'kneel',
+            'knell', 'knife', 'knock', 'known', 'koala', 'label', 'labor', 'laden', 'ladle', 'lager', 'lance',
+            'latch', 'later', 'latex', 'lathe', 'laugh', 'layer', 'leach', 'leafy', 'leaky', 'learn', 'lease',
+            'leash', 'least', 'leave', 'ledge', 'leech', 'leery', 'lefty', 'legal', 'leggy', 'lemon', 'lemur',
+            'leper', 'level', 'lever', 'libel', 'liege', 'light', 'liken', 'lilac', 'limbo', 'limit', 'linen',
+            'liner', 'lingo', 'lipid', 'lithe', 'liver', 'livid', 'llama', 'loamy', 'loath', 'lobby', 'local',
+            'locus', 'lodge', 'lofty', 'logic', 'login', 'looks', 'loopy', 'loose', 'lorry', 'loser', 'lotto',
+            'lotus', 'louse', 'lover', 'lower', 'lowly', 'loyal', 'lucky', 'lumen', 'lumpy', 'lunar', 'lunch',
+            'lunge', 'lupus', 'lurch', 'lurid', 'lusty', 'lying', 'lymph', 'lyric', 'macaw', 'macho', 'macro',
+            'madam', 'madly', 'mafia', 'magic', 'magma', 'maize', 'major', 'maker', 'mambo', 'mamma', 'manor',
+            'maple', 'march', 'marry', 'marsh', 'mason', 'masse', 'masts', 'match', 'matey', 'mauve', 'maxim',
+            'maybe', 'mayor', 'mazda', 'mealy', 'means', 'meaty', 'mecca', 'medal', 'media', 'medic', 'melee',
+            'melon', 'mercy', 'merge', 'merit', 'merry', 'metal', 'meter', 'metro', 'micro', 'midst', 'might',
+            'milky', 'mimic', 'mince', 'minds', 'mined', 'miner', 'mingle', 'minor', 'minty', 'minus', 'mirth',
+            'miser', 'missy', 'mists', 'mitts', 'mixed', 'mixer', 'moans', 'moats', 'mocha', 'modal', 'model',
+            'modem', 'modus', 'moist', 'molar', 'molds', 'molly', 'momma', 'moody', 'moors', 'mooty', 'moped',
+            'mopes', 'moral', 'moray', 'morel', 'mores', 'morph', 'mossy', 'motel', 'motif', 'motor', 'motto',
+            'mound', 'mount', 'mourn', 'mouse', 'mouth', 'mover', 'movie', 'mower', 'mucky', 'muddy', 'muggy',
+            'mulch', 'mumps', 'munch', 'mural', 'murky', 'mushy', 'music', 'mused', 'mushy', 'musty', 'muted',
+            'muter', 'mutts', 'myrrh', 'nadir', 'naiad', 'naive', 'named', 'napes', 'nappy', 'nasal', 'nasty',
+            'natal', 'naval', 'navel', 'needs', 'neigh', 'nerdy', 'nerve', 'never', 'newly', 'nicer', 'niche',
+            'night', 'ninja', 'ninth', 'noble', 'nodal', 'noise', 'noisy', 'nomad', 'north', 'nosed', 'noted',
+            'novel', 'nudge', 'nymph', 'oasis', 'occur', 'ocean', 'octet', 'odder', 'oddly', 'offal', 'offer',
+            'often', 'olden', 'older', 'olive', 'omega', 'onset', 'opals', 'opens', 'opera', 'opine', 'opium',
+            'optic', 'orate', 'order', 'organ', 'other', 'otter', 'ought', 'ounce', 'outdo', 'outer', 'outgo',
+            'ovary', 'ovate', 'overt', 'ovine', 'ovoid', 'owing', 'owner', 'oxide', 'ozone', 'paddy', 'pagan',
+            'pager', 'palmy', 'palsy', 'panda', 'panel', 'panic', 'pansy', 'papal', 'paper', 'parer', 'parka',
+            'parry', 'parse', 'party', 'pasta', 'paste', 'pasty', 'patch', 'patio', 'patty', 'pause', 'payee',
+            'pecan', 'pedal', 'peeps', 'penny', 'pepsi', 'perch', 'peril', 'perky', 'pesky', 'pesto', 'petal',
+            'petty', 'phase', 'phone', 'phony', 'photo', 'piano', 'picky', 'piece', 'piety', 'piggy', 'pilot',
+            'pinch', 'piney', 'pinky', 'pinto', 'piper', 'pique', 'pitch', 'pithy', 'pixel', 'pixie', 'pizza',
+            'plaid', 'plain', 'plait', 'plane', 'plank', 'plant', 'plash', 'plasm', 'plate', 'plaza', 'plead',
+            'pleas', 'pleat', 'plied', 'plier', 'plods', 'ploys', 'pluck', 'plumb', 'plume', 'plump', 'plunk',
+            'plush', 'poesy', 'poets', 'point', 'poise', 'poked', 'polar', 'poled', 'polka', 'polls', 'polyp',
+            'pooch', 'poohs', 'poppy', 'porch', 'pored', 'porgy', 'porno', 'ports', 'posed', 'poser', 'posse',
+            'potty', 'pouch', 'poult', 'pound', 'pours', 'power', 'prank', 'prats', 'prawn', 'preen', 'press',
+            'price', 'prick', 'pride', 'prime', 'primp', 'print', 'prior', 'prize', 'probe', 'prone', 'proof',
+            'prose', 'prowl', 'proxy', 'prude', 'prune', 'psalm', 'pseudo', 'pubic', 'pucka', 'pudgy', 'puffs',
+            'puffy', 'puggy', 'pulse', 'punky', 'pupil', 'puppy', 'puree', 'purer', 'purge', 'purse', 'putty',
+            'pygmy', 'quack', 'quads', 'quaff', 'quail', 'quake', 'qualm', 'query', 'quilt', 'quips', 'quirk',
+            'quits', 'quota', 'quote', 'rabid', 'racer', 'radar', 'radii', 'radio', 'rainy', 'raise', 'rally',
+            'ramps', 'ranch', 'randy', 'range', 'rapid', 'rarer', 'raspy', 'rated', 'ratty', 'raven', 'rayon',
+            'razor', 'reach', 'react', 'ready', 'realm', 'rearm', 'rebar', 'rebel', 'rebut', 'recap', 'recur',
+            'recut', 'reedy', 'refer', 'refit', 'rehab', 'reign', 'relax', 'relay', 'relic', 'remit', 'renal',
+            'renew', 'repay', 'repel', 'reply', 'rerun', 'reset', 'resin', 'retch', 'retro', 'retry', 'reuse',
+            'revel', 'revue', 'rhino', 'rhyme', 'rider', 'ridge', 'rifle', 'right', 'rigid', 'riley', 'rinse',
+            'ripen', 'risen', 'riser', 'risky', 'rival', 'river', 'rivet', 'roach', 'roast', 'robin', 'robot',
+            'rocky', 'rodeo', 'roger', 'rogue', 'roils', 'rooky', 'roomy', 'roost', 'roots', 'roped', 'rosin',
+            'rotor', 'rouge', 'rough', 'round', 'rouse', 'route', 'roved', 'rowdy', 'royal', 'rupee', 'rural',
+            'rusty', 'saber', 'sadly', 'saint', 'salad', 'salon', 'salsa', 'salty', 'sandy', 'saner', 'sassy',
+            'satin', 'sauce', 'sauna', 'saved', 'savor', 'scald', 'scale', 'scalp', 'scaly', 'scamp', 'scant',
+            'scare', 'scarf', 'scary', 'scene', 'scent', 'scion', 'scoff', 'scold', 'scope', 'score', 'scorn',
+            'scout', 'scowl', 'scrap', 'screw', 'scrub', 'scrum', 'scuba', 'sedan', 'seedy', 'segue', 'seize',
+            'semen', 'sense', 'sepia', 'serge', 'serum', 'serve', 'setup', 'seven', 'sever', 'shade', 'shaft',
+            'shake', 'shaky', 'shale', 'shall', 'shalt', 'shame', 'shank', 'shape', 'share', 'shark', 'sharp',
+            'shave', 'shear', 'sheen', 'sheer', 'sheet', 'sheik', 'shelf', 'shell', 'shied', 'shift', 'shine',
+            'shiny', 'shire', 'shirk', 'shirt', 'shoal', 'shock', 'shone', 'shook', 'shoot', 'shore', 'shorn',
+            'short', 'shout', 'shove', 'shrub', 'shrug', 'shuck', 'shunt', 'shush', 'shyly', 'sicko', 'sided',
+            'siege', 'sieve', 'sight', 'sigma', 'silky', 'silly', 'since', 'sinew', 'singe', 'sissy', 'sitar',
+            'sited', 'sixth', 'sixty', 'sizey', 'skate', 'skier', 'skiff', 'skill', 'skimp', 'skirt', 'skull',
+            'skunk', 'slack', 'slain', 'slake', 'slang', 'slant', 'slash', 'slate', 'slave', 'slays', 'sleds',
+            'sleek', 'sleep', 'sleet', 'slept', 'slice', 'slick', 'slide', 'slime', 'slimy', 'sling', 'slink',
+            'slipk', 'slits', 'slope', 'slosh', 'sloth', 'slump', 'slung', 'slunk', 'slurp', 'slush', 'smack',
+            'small', 'smart', 'smash', 'smear', 'smell', 'smelt', 'smile', 'smirk', 'smoke', 'smoky', 'snack',
+            'snake', 'snarl', 'sneak', 'sneer', 'sniff', 'snore', 'snort', 'snowy', 'snuck', 'soapy', 'sober',
+            'soggy', 'solar', 'solid', 'solve', 'sonar', 'sonic', 'sooth', 'sooty', 'sorry', 'sound', 'south',
+            'sower', 'space', 'spade', 'spank', 'spare', 'spark', 'speak', 'spear', 'speck', 'speed', 'spend',
+            'spent', 'sperm', 'spice', 'spicy', 'spied', 'spill', 'spine', 'spiny', 'spire', 'spite', 'splat',
+            'split', 'spoil', 'spoke', 'spoon', 'spore', 'sport', 'spout', 'spray', 'sprig', 'spunk', 'spurn',
+            'spurt', 'squad', 'squat', 'squid', 'stack', 'staff', 'stage', 'staid', 'stain', 'stair', 'stake',
+            'stale', 'stalk', 'stall', 'stamp', 'stand', 'stank', 'stare', 'stark', 'start', 'stash', 'state',
+            'stave', 'stead', 'steal', 'steam', 'steed', 'steel', 'steep', 'steer', 'stein', 'stern', 'stick',
+            'stiff', 'still', 'stilt', 'sting', 'stink', 'stint', 'stock', 'stole', 'stone', 'stood', 'stool',
+            'stoop', 'store', 'stork', 'storm', 'story', 'stout', 'stove', 'strap', 'straw', 'stray', 'strip',
+            'stuck', 'study', 'stuff', 'stump', 'stung', 'stunk', 'stunt', 'style', 'suave', 'sugar', 'suite',
+            'sulky', 'sunny', 'super', 'surge', 'swamp', 'swami', 'swath', 'swear', 'sweat', 'sweep', 'sweet',
+            'swell', 'swept', 'swift', 'swill', 'swine', 'swing', 'swirl', 'swish', 'syrup', 'table', 'tacit',
+            'tacky', 'taffy', 'taint', 'taken', 'taker', 'talon', 'tamer', 'tango', 'tangy', 'taper', 'tapir',
+            'tardy', 'tarot', 'taste', 'tasty', 'tatty', 'taunt', 'teach', 'tease', 'teddy', 'teeth', 'tempo',
+            'tenet', 'tenor', 'tense', 'tepee', 'tepid', 'terra', 'terse', 'testy', 'thane', 'thank', 'theft',
+            'their', 'theme', 'there', 'these', 'thick', 'thief', 'thigh', 'thing', 'think', 'third', 'thorn',
+            'those', 'three', 'threw', 'throb', 'throw', 'thrum', 'thumb', 'thump', 'tiger', 'tight', 'timer',
+            'titan', 'title', 'toast', 'today', 'token', 'toler', 'tommy', 'tonal', 'tongs', 'tooth', 'topic',
+            'toque', 'torch', 'torso', 'total', 'touch', 'tough', 'towel', 'tower', 'toxic', 'toxin', 'trace',
+            'track', 'tract', 'trade', 'trail', 'train', 'trait', 'tramp', 'trash', 'trawl', 'tread', 'treat',
+            'trend', 'triad', 'trial', 'tribe', 'trick', 'tried', 'trier', 'trite', 'troll', 'troop', 'truce',
+            'truck', 'truly', 'trump', 'trunk', 'truss', 'trust', 'truth', 'tumor', 'tuned', 'tunic', 'tweed',
+            'twice', 'twine', 'twirl', 'twist', 'tying', 'udder', 'ulcer', 'ultra', 'umbra', 'uncle', 'uncut',
+            'under', 'undid', 'unfit', 'unify', 'union', 'unite', 'unity', 'untie', 'until', 'upper', 'upset',
+            'urban', 'urine', 'usage', 'usual', 'utter', 'vague', 'valet', 'valid', 'valor', 'value', 'vapid',
+            'vapor', 'vault', 'vaunt', 'vegan', 'venom', 'venue', 'verse', 'vigor', 'viral', 'virus', 'visit',
+            'vista', 'vital', 'vivid', 'vocal', 'vodka', 'voice', 'voter', 'vouch', 'vowel', 'vying', 'wacky',
+            'wafer', 'waffle', 'waist', 'waive', 'waltz', 'waste', 'watch', 'water', 'weary', 'weave', 'wedge',
+            'weedy', 'weigh', 'weird', 'whack', 'whale', 'wheat', 'wheel', 'where', 'which', 'whiff', 'while',
+            'whine', 'whiny', 'whirl', 'white', 'whole', 'whoop', 'whose', 'widen', 'widow', 'width', 'wield',
+            'wight', 'wilts', 'wince', 'windy', 'wiped', 'wired', 'wiser', 'witty', 'woken', 'woman', 'wombat',
+            'women', 'woody', 'woofs', 'wooly', 'words', 'world', 'worry', 'worse', 'worst', 'worth', 'would',
+            'wound', 'woven', 'wrack', 'wrath', 'wreak', 'wreck', 'wrest', 'wring', 'wrist', 'write', 'wrong',
+            'wrote', 'wrung', 'wryly', 'yacht', 'yearn', 'yeast', 'yodel', 'youth', 'zebra', 'zipper', 'zombie',
+            'zonal', 'zooey',
+            // 6-letter
+            'abacus', 'abated', 'abides', 'ablaze', 'aboard', 'abodes', 'abound', 'absent', 'absorb', 'accede',
+            'accept', 'access', 'across', 'acting', 'active', 'actual', 'acuity', 'adhere', 'adjust', 'admire',
+            'adobes', 'adopts', 'advise', 'affair', 'affect', 'affine', 'afford', 'afield', 'agenda', 'agreed',
+            'aiding', 'ailing', 'aiming', 'airing', 'alarms', 'alight', 'allege', 'allied', 'allies', 'almost',
+            'aloft', 'altars', 'altered', 'always', 'amazon', 'amount', 'amulet', 'anemia', 'angled', 'animal',
+            'ankles', 'annual', 'answer', 'anthem', 'anyway', 'apathy', 'appear', 'arcade', 'arcane', 'arching',
+            'arctic', 'ardent', 'arisen', 'armada', 'armful', 'armory', 'armpit', 'around', 'arrant', 'arrays',
+            'arrest', 'arrive', 'arrows', 'artist', 'ascent', 'asking', 'asleep', 'aspire', 'assail', 'assist',
+            'assume', 'assure', 'athens', 'attach', 'attack', 'attain', 'attempt', 'attend', 'august', 'auntie',
+            'author', 'autumn', 'avenge', 'avenue', 'averse', 'awards', 'awhile', 'awning', 'babies', 'backed',
+            'badger', 'baffle', 'baited', 'baldly', 'balked', 'ballad', 'ballet', 'ballot', 'banana', 'bandit',
+            'banged', 'banker', 'banner', 'banter', 'barely', 'bargain', 'barley', 'barrel', 'barren', 'barter',
+            'basket', 'basset', 'battle', 'beacon', 'beaded', 'beagle', 'beaker', 'beaned', 'beards', 'beaten',
+            'beauty', 'became', 'become', 'bedbug', 'bedlam', 'beefed', 'before', 'behalf', 'behave', 'behead',
+            'beheld', 'belied', 'belief', 'belong', 'beloved', 'bended', 'benign', 'bereft', 'beside', 'besmut',
+            'bestow', 'betide', 'betray', 'better', 'bevels', 'beware', 'beyond', 'blanch', 'blared', 'blazer',
+            'bleach', 'bleary', 'blench', 'blight', 'blimps', 'blinds', 'blinis', 'blinks', 'blithe', 'blooms',
+            'blotch', 'blouse', 'blowed', 'blower', 'blueys', 'bluffs', 'blunder', 'blunts', 'blurted', 'blushy',
+            'boarded', 'boasts', 'bobbin', 'bodies', 'boiled', 'bolted', 'bomber', 'bonnet', 'boogie', 'booked',
+            'boomer', 'booted', 'booths', 'border', 'borrow', 'bosses', 'botany', 'bother', 'bottle', 'bottom',
+            'bought', 'bounce', 'bounds', 'bounty', 'bourse', 'bouton', 'bovine', 'bowels', 'bowing', 'boxcar',
+            'boxers', 'braces', 'braids', 'brains', 'brakes', 'branch', 'brands', 'brassy', 'bravado', 'brazen',
+            'breach', 'breath', 'bredes', 'breech', 'breeds', 'brewer', 'briars', 'bribes', 'bricks', 'bridal',
+            'brides', 'bridge', 'bridle', 'briefs', 'bright', 'brined', 'brisks', 'broach', 'broaden', 'broods',
+            'brooks', 'broomy', 'broths', 'browns', 'browse', 'bruins', 'bruise', 'brunet', 'brunts', 'brushy',
+            'brutal', 'bubble', 'bucked', 'bucket', 'buckle', 'budded', 'budget', 'buffer', 'bugged', 'bugler',
+            'builds', 'bulged', 'bulked', 'bulled', 'bullet', 'bumble', 'bumped', 'bumper', 'bunchy', 'bundle',
+            'bungee', 'bunked', 'burden', 'bureau', 'burgle', 'burial', 'buried', 'burkas', 'burned', 'burner',
+            'burped', 'bursts', 'bushes', 'busied', 'busily', 'buster', 'butane', 'butler', 'butted', 'button',
+            'buyers', 'buzzed', 'buzzer', 'byline', 'bypass', 'cabbie', 'cabled', 'caches', 'cactus', 'caddie',
+            'cafes', 'caged', 'cairns', 'camera', 'camped', 'canals', 'cancel', 'cancer', 'candid', 'candle',
+            'cannon', 'canoes', 'canton', 'canvas', 'canyon', 'capable', 'capita', 'capons', 'capsule', 'captor',
+            'carats', 'carbon', 'carded', 'careen', 'career', 'caress', 'cargoes', 'carols', 'carousal', 'carper',
+            'carpet', 'carrot', 'carted', 'cartel', 'cashew', 'cashier', 'casket', 'casted', 'caster', 'castle',
+            'casual', 'catalog', 'caters', 'cattle', 'caucus', 'causal', 'caved', 'cavern', 'caviar', 'ceased',
+            'cedars', 'ceiling', 'celery', 'cellar', 'censor', 'cereal', 'chafed', 'chaffy', 'chants', 'charge',
+            'chaste', 'cheats', 'checks', 'cheeks', 'cheers', 'cherry', 'chests', 'chewed', 'chicks', 'chided',
+            'chiefs', 'chimes', 'chinks', 'chirps', 'choice', 'choirs', 'choked', 'choose', 'choosy', 'chores',
+            'chosen', 'christ', 'chucks', 'chunks', 'church', 'churns', 'cipher', 'circle', 'circus', 'citrus',
+            'clamps', 'clangs', 'clanks', 'claret', 'clasps', 'classy', 'clause', 'clawed', 'cleans', 'clears',
+            'clefts', 'clergy', 'clerks', 'clever', 'clicks', 'cliffs', 'climbs', 'climes', 'clinch', 'clingy',
+            'clinks', 'cloaks', 'clocks', 'cloddy', 'clones', 'closes', 'cloths', 'cloudy', 'clouts', 'cloven',
+            'clowns', 'coated', 'coaxed', 'cobalt', 'cobble', 'cocoon', 'coding', 'coffee', 'coffers', 'cohort',
+            'coiled', 'coins', 'colder', 'collie', 'colognes', 'colony', 'colors', 'coltish', 'column', 'combed',
+            'comedy', 'comely', 'comets', 'comfit', 'comics', 'comity', 'commas', 'common', 'compel', 'comply',
+            'compos', 'concur', 'condor', 'coneys', 'confess', 'confine', 'confirm', 'conform', 'confuse', 'congo',
+            'conies', 'convex', 'convey', 'convoy', 'cooing', 'cooked', 'cooler', 'cooped', 'copied', 'copier',
+            'copper', 'copter', 'coral', 'corded', 'corked', 'corned', 'corner', 'cornet', 'corpus', 'corral',
+            'costly', 'cotton', 'couched', 'coughs', 'council', 'counts', 'county', 'couple', 'coupon', 'course',
+            'cousin', 'covers', 'coveted', 'coward', 'cowboy', 'cowers', 'coyote', 'cozier', 'cracked', 'cradle',
+            'crafts', 'cramps', 'cranks', 'crapes', 'crashy', 'crated', 'crater', 'craven', 'crayon', 'creaky',
+            'creamy', 'crease', 'creates', 'credit', 'creeps', 'crepey', 'crept', 'crews', 'criers', 'cringe',
+            'crispy', 'croaks', 'crocks', 'crony', 'crooks', 'croons', 'croped', 'crossly', 'crouch', 'croupy',
+            'crowds', 'crowns', 'crucial', 'cruder', 'cruets', 'cruise', 'crumbs', 'crumby', 'crumps', 'crunch',
+            'crushes', 'crusty', 'crying', 'crypts', 'cubans', 'cubby', 'cuckoo', 'cuddle', 'cudgel', 'cuffed',
+            'culprit', 'cultiv', 'cumber', 'cummin', 'cupful', 'cupola', 'curbed', 'curdle', 'curers', 'curfew',
+            'curios', 'curled', 'curler', 'curran', 'curricle', 'cursed', 'curser', 'curtly', 'curtsy', 'curved',
+            'curvet', 'cushion', 'cuspis', 'cutlet', 'cycles', 'cyclic', 'cynics', 'czar', 'dabble', 'daffy',
+            'dagger', 'dailies', 'dainty', 'dairies', 'daisies', 'damage', 'damsel', 'dancer', 'dandle', 'danger',
+            'dangle', 'dapper', 'daring', 'darken', 'darker', 'darling', 'darned', 'darted', 'dashes', 'dating',
+            'daubed', 'daunts', 'dawdles', 'dazzle', 'deacon', 'deadly', 'dealer', 'dearer', 'deaths', 'debate',
+            'debits', 'debris', 'debtor', 'decade', 'decamp', 'decent', 'decide', 'decked', 'decors', 'decree',
+            'deduct', 'deeds', 'deepen', 'deeper', 'defame', 'defect', 'defend', 'defers', 'define', 'defray',
+            'defuse', 'degree', 'deject', 'delays', 'delete', 'delict', 'delude', 'deluge', 'demand', 'demote',
+            'denial', 'dental', 'denude', 'denver', 'deodar', 'depart', 'depend', 'deploy', 'depose', 'depths',
+            'deputy', 'derail', 'desert', 'design', 'desire', 'desist', 'detain', 'detect', 'deter', 'detest',
+            'device', 'devils', 'devote', 'devour', 'dewy', 'dexter', 'diadem', 'dialed', 'diamet', 'diaper',
+            'dicker', 'dicta', 'dietary', 'digger', 'dignity', 'digress', 'dilate', 'dillies', 'dimmer', 'dimple',
+            'dinghy', 'dingo', 'dingy', 'dinner', 'diodes', 'direly', 'dirked', 'dirtied', 'disarm', 'disbar',
+            'discus', 'dismal', 'dismay', 'dispel', 'dissect', 'distant', 'distil', 'ditchy', 'ditty', 'diverge',
+            'divers', 'divert', 'divide', 'divine', 'dizzied', 'docent', 'dodged', 'dodger', 'dodges', 'doffed',
+            'dogged', 'dogmas', 'dolmen', 'domain', 'domine', 'donkey', 'donors', 'doomed', 'dopier', 'dories',
+            'dormer', 'dorsal', 'dosage', 'dose', 'dotted', 'dotty', 'doubly', 'doubted', 'doughs', 'dourly',
+            'doused', 'dovish', 'dowager', 'dowels', 'downed', 'downer', 'dozens', 'drafts', 'dragon', 'drainer',
+            'drake', 'dramas', 'draped', 'draper', 'draught', 'drawer', 'dreads', 'dreams', 'dreary', 'dredge',
+            'drench', 'dressy', 'drier', 'drifts', 'drilly', 'drinks', 'drippy', 'drivel', 'driven', 'driver',
+            'droned', 'drools', 'droopy', 'dropsy', 'drossy', 'drouth', 'drove', 'drowns', 'drudge', 'druids',
+            'drunks', 'dryers', 'dryish', 'dualism', 'dually', 'dubbed', 'ducked', 'ducts', 'dudgeon', 'duffel',
+            'dugout', 'dukedom', 'dullard', 'dumber', 'dumbly', 'dummied', 'dumpier', 'dunged', 'dunked', 'duplex',
+            'duress', 'during', 'dusted', 'duster', 'duties', 'dwarfs', 'dwells', 'dyeing', 'dying', 'eaglets',
+            'earlobe', 'earmark', 'earned', 'earner', 'earshot', 'earthen', 'easing', 'eastward', 'eating', 'ebbing',
+            'echelon', 'echoes', 'eclipse', 'ecology', 'economy', 'ecru', 'edicts', 'edified', 'editor', 'educate',
+            'eel', 'efface', 'effect', 'effete', 'effigy', 'effort', 'effuse', 'egress', 'eighth', 'eighty', 'either',
+            'elapse', 'elated', 'elderly', 'elders', 'elector', 'elegant', 'element', 'elevate', 'eleven', 'elfin',
+            'elicit', 'elided', 'elites', 'elope', 'eloquent', 'elsewhere', 'eluded', 'elves', 'embalm', 'embargo',
+            'embassy', 'embody', 'emboss', 'emceed', 'emerge', 'emetic', 'emigre', 'eminent', 'emir', 'emits', 'emotion',
+            'empathy', 'empire', 'employ', 'enable', 'enamel', 'enchant', 'encore', 'endear', 'endeavor', 'endemic',
+            'endless', 'endorse', 'enemy', 'energy', 'enfold', 'engage', 'engine', 'engulf', 'enhance', 'enjoin',
+            'enjoyed', 'enlarge', 'enlight', 'enlist', 'enmity', 'enormous', 'enough', 'enrage', 'enrich', 'enroll',
+            'ensign', 'ensued', 'ensure', 'entail', 'entered', 'enthuse', 'entice', 'entire', 'entity', 'entomb',
+            'entrap', 'entree', 'entrust', 'entry', 'envelop', 'envied', 'envoy', 'envy', 'enzyme', 'epic', 'episode',
+            'epoch', 'equable', 'equal', 'equine', 'equip', 'era', 'erase', 'erased', 'erect', 'erode', 'errand',
+            'errant', 'erratic', 'errors', 'erupt', 'escalate', 'escape', 'escort', 'espy', 'essay', 'estate', 'esteem',
+            'esther', 'estop', 'etc', 'etch', 'eternal', 'ether', 'ethic', 'ethos', 'evade', 'evangel', 'evening',
+            'event', 'evergreen', 'evict', 'evident', 'evil', 'evince', 'evoke', 'evolve', 'exact', 'exalt', 'examine',
+            'exceed', 'excel', 'except', 'excerpt', 'excess', 'excise', 'excite', 'exclaim', 'exclude', 'excrete',
+            'excuse', 'execute', 'exempt', 'exert', 'exhale', 'exhaust', 'exhibit', 'exhort', 'exhume', 'exile', 'exist',
+            'exit', 'exodus', 'exonerate', 'exotic', 'expand', 'expect', 'expel', 'expend', 'expert', 'expire', 'explain',
+            'explode', 'exploit', 'explore', 'export', 'expose', 'expound', 'express', 'expunge', 'extant', 'extend',
+            'extent', 'extern', 'extinct', 'extol', 'extort', 'extra', 'extreme', 'extrude', 'exuberant', 'eye', 'eyed',
+            'fabled', 'fabric', 'facade', 'facial', 'facies', 'facile', 'factor', 'faculty', 'faded', 'fagot', 'failed',
+            'faint', 'fairer', 'fairly', 'faith', 'faker', 'falcon', 'fallen', 'fallow', 'false', 'falter', 'fame',
+            'famed', 'familiar', 'family', 'famine', 'famous', 'fancied', 'fancy', 'farce', 'fared', 'farms', 'farrow',
+            'fatal', 'fate', 'fated', 'father', 'fathom', 'fatigue', 'fats', 'fatten', 'fault', 'fauna', 'favor', 'fawn',
+            'fealty', 'fear', 'feast', 'feat', 'feather', 'feature', 'febrile', 'fed', 'feeble', 'feeder', 'feign',
+            'feint', 'felicity', 'feline', 'fell', 'fellow', 'felony', 'felt', 'female', 'fence', 'ferment', 'ferret',
+            'ferry', 'fertile', 'fervid', 'festival', 'festoon', 'fetch', 'fetid', 'fetish', 'fetter', 'feud', 'fever',
+            'fewer', 'fiasco', 'fiber', 'fickle', 'fiction', 'fiddle', 'fidelity', 'fidget', 'field', 'fiend', 'fierce',
+            'fife', 'fifth', 'fifty', 'fight', 'figure', 'filch', 'file', 'filing', 'filled', 'filler', 'filly', 'filter',
+            'filth', 'final', 'finance', 'finder', 'finery', 'finesse', 'finger', 'finish', 'finite', 'fir', 'fire',
+            'firm', 'first', 'fiscal', 'fish', 'fisher', 'fissure', 'fist', 'fitted', 'fitter', 'five', 'fix',
+            'fjord', 'flabby', 'flagon', 'flair', 'flak', 'flake', 'flame', 'flank', 'flap', 'flare', 'flash', 'flat',
+            'flattery', 'flavor', 'flaw', 'flax', 'flea', 'fled', 'flee', 'fleet', 'flesh', 'fleur', 'flew', 'flex',
+            'flick', 'flier', 'fling', 'flint', 'flip', 'flirt', 'flit', 'float', 'flock', 'floe', 'flog', 'flood',
+            'floor', 'flop', 'flora', 'floss', 'flour', 'flout', 'flow', 'flown', 'fluff', 'fluid', 'fluke', 'flung',
+            'flunk', 'flush', 'flute', 'flutter', 'flyer', 'foal', 'foam', 'focal', 'focus', 'foe', 'fog', 'foil',
+            'fold', 'folio', 'folk', 'folly', 'foment', 'fond', 'font', 'food', 'fool', 'foot', 'forage', 'foray',
+            'forbid', 'force', 'ford', 'fore', 'forge', 'forget', 'fork', 'form', 'formal', 'format', 'former', 'fort',
+            'forth', 'forty', 'forum', 'fossil', 'foster', 'foul', 'found', 'fount', 'four', 'fowl', 'fox', 'foyer',
+            'frail', 'frame', 'frank', 'fraud', 'fray', 'freak', 'freckle', 'free', 'freed', 'freedom', 'freer', 'freeze',
+            'frenzy', 'fresh', 'fret', 'friar', 'fridge', 'friend', 'frigid', 'frill', 'fringe', 'frisk', 'frock', 'frog',
+            'front', 'frost', 'froth', 'frown', 'frozen', 'fruit', 'fry', 'fudge', 'fuel', 'fugitive', 'fulcrum', 'full',
+            'fulminate', 'fume', 'fund', 'fungal', 'fungus', 'funk', 'furl', 'furnish', 'fury', 'fuse', 'fusion', 'fuss',
+            'futile', 'future', 'fuzz', 'gabble', 'gable', 'gadget', 'gaffer', 'gag', 'gage', 'gainsay', 'gait', 'galaxy',
+            'gale', 'gall', 'gallant', 'gallery', 'galley', 'gallon', 'gallop', 'gamble', 'gambol', 'game', 'gamin',
+            'gander', 'gang', 'gape', 'garbage', 'garb', 'garden', 'gargle', 'garish', 'garland', 'garner', 'garret',
+            'garrison', 'garrulous', 'gas', 'gash', 'gasoline', 'gasp', 'gastric', 'gate', 'gather', 'gaud', 'gauge',
+            'gaunt', 'gauze', 'gave', 'gawk', 'gay', 'gaze', 'gear', 'gel', 'geld', 'gem', 'gender', 'gene', 'general',
+            'generate', 'genial', 'genie', 'genius', 'gent', 'gentle', 'gentry', 'genuine', 'germ', 'germane', 'gesture',
+            'get', 'ghastly', 'ghetto', 'ghost', 'giant', 'gibber', 'gibe', 'giddy', 'gift', 'gig', 'gild', 'gill', 'gilt',
+            'gimlet', 'gird', 'girl', 'girth', 'gist', 'give', 'glacial', 'glad', 'glade', 'glamor', 'glance', 'gland',
+            'glare', 'glass', 'glaze', 'gleam', 'glean', 'glen', 'glib', 'glide', 'glint', 'glisten', 'glitter', 'gloom',
+            'glory', 'gloss', 'glove', 'glow', 'glue', 'glum', 'glut', 'gnarled', 'gnat', 'gnaw', 'gnome', 'go', 'goad',
+            'goal', 'goat', 'gobble', 'goblin', 'god', 'goggle', 'going', 'gold', 'golf', 'gone', 'good', 'goody', 'goose',
+            'gorge', 'gorgeous', 'gory', 'gosh', 'gospel', 'gossip', 'gouge', 'gourd', 'gout', 'govern', 'gown', 'grab',
+            'grace', 'grade', 'gradual', 'graft', 'grain', 'gram', 'grand', 'grant', 'grape', 'graph', 'grasp', 'grass',
+            'gratis', 'grave', 'gray', 'graze', 'great', 'greed', 'green', 'greet', 'grief', 'grill', 'grin', 'grind',
+            'grip', 'grit', 'groan', 'groat', 'grocer', 'groom', 'grove', 'grow', 'grown', 'growth', 'grub', 'grudge',
+            'gruff', 'grumble', 'grunt', 'guarantee', 'guard', 'guess', 'guest', 'guide', 'guild', 'guile', 'guilt',
+            'guinea', 'guitar', 'gulf', 'gull', 'gulp', 'gum', 'gun', 'gush', 'gust', 'gut', 'gutter', 'guy', 'guzzle',
+            'gym', 'gyp', 'gypsy', 'habitat', 'habit', 'hack', 'haft', 'haggle', 'hail', 'hair', 'hale', 'half', 'hall',
+            'halo', 'halt', 'ham', 'hammer', 'hamper', 'hand', 'handle', 'hang', 'hangar', 'hanker', 'haphazard', 'happen',
+            'harass', 'harbor', 'hard', 'harden', 'hardy', 'hare', 'hark', 'harm', 'harness', 'harp', 'harridan', 'harrow',
+            'harsh', 'hart', 'harvest', 'hash', 'hasp', 'haste', 'hasten', 'hasty', 'hat', 'hate', 'haul', 'haunch',
+            'haunt', 'have', 'haven', 'havoc', 'hawk', 'hay', 'hazard', 'haze', 'hazy', 'head', 'heal', 'heap', 'hear',
+            'hearth', 'heat', 'heave', 'heavy', 'hectare', 'hedge', 'heed', 'heel', 'hefty', 'heir', 'held', 'helm', 'help',
+            'hem', 'hen', 'hence', 'her', 'herald', 'herb', 'herd', 'here', 'heritage', 'hermit', 'hero', 'heroin', 'heron',
+            'herring', 'hesitate', 'hew', 'hex', 'heyday', 'hiatus', 'hibernate', 'hiccup', 'hide', 'high', 'hike', 'hill',
+            'hilt', 'him', 'hind', 'hinder', 'hint', 'hip', 'hire', 'hiss', 'hit', 'hitch', 'hive', 'hoard', 'hoary',
+            'hoax', 'hobble', 'hobby', 'hobo', 'hock', 'hoe', 'hog', 'hold', 'hole', 'holiday', 'hollow', 'holly', 'holy',
+            'home', 'honey', 'honor', 'hood', 'hoof', 'hook', 'hoop', 'hoot', 'hope', 'horde', 'horn', 'horrid', 'horse',
+            'hose', 'host', 'hot', 'hotel', 'hound', 'hour', 'house', 'hovel', 'hover', 'how', 'howl', 'hub', 'hubbub',
+            'hue', 'huff', 'hug', 'huge', 'hull', 'hum', 'human', 'humble', 'humbug', 'hump', 'hung', 'hunger', 'hungry',
+            'hunk', 'hunt', 'hurdle', 'hurl', 'hurrah', 'hurry', 'hurt', 'hush', 'husk', 'hustle', 'hut', 'hutch', 'hydra',
+            'hyena', 'hymn', 'hype', 'hyphen', 'hypnosis', 'hyssop', 'iambic', 'ibex', 'ice', 'icicle', 'icing', 'icon',
+            'idea', 'ideal', 'idle', 'idly', 'idol', 'if', 'ignite', 'ignore', 'iguana', 'ill', 'illicit', 'image',
+            'imagine', 'imbibe', 'imitate', 'immense', 'immure', 'impact', 'impair', 'impale', 'impart', 'impeach',
+            'impede', 'impel', 'impend', 'imperil', 'impinge', 'implant', 'implement', 'implicate', 'imply', 'import',
+            'impose', 'impostor', 'impotent', 'impound', 'impress', 'imprint', 'imprison', 'improve', 'impulse', 'inane',
+            'inapt', 'inborn', 'inbred', 'incant', 'incense', 'incept', 'incest', 'inch', 'incident', 'incite', 'incline',
+            'include', 'income', 'incorp', 'increase', 'incubate', 'inculcate', 'incumbent', 'incur', 'incursion', 'indeed',
+            'indent', 'index', 'indict', 'indie', 'indign', 'indigo', 'indite', 'indolent', 'indoor', 'indorse', 'induce',
+            'induct', 'indulge', 'inept', 'inert', 'inertia', 'inevitable', 'infame', 'infant', 'infect', 'infer', 'inferno',
+            'infest', 'infidel', 'infield', 'infirm', 'inflame', 'inflate', 'inflect', 'inflict', 'influence', 'inform',
+            'infra', 'infringe', 'infuse', 'ingest', 'ingrain', 'ingrate', 'ingress', 'inhabit', 'inhale', 'inhere',
+            'inherit', 'inhibit', 'inhuman', 'initial', 'inject', 'injure', 'ink', 'inland', 'inlet', 'inn', 'innate',
+            'inner', 'innocent', 'innovate', 'input', 'inquest', 'inquire', 'inroad', 'insane', 'inscribe', 'insect',
+            'insert', 'inside', 'insight', 'insist', 'insolent', 'inspect', 'inspire', 'install', 'instance', 'instant',
+            'instead', 'instep', 'instill', 'insular', 'insult', 'insure', 'insurgent', 'intact', 'intake', 'integer',
+            'integral', 'intend', 'intent', 'inter', 'interim', 'internal', 'interpol', 'intimate', 'intone', 'intox',
+            'intra', 'intrepid', 'intrigue', 'intrinsic', 'introduce', 'intrude', 'intuit', 'inundate', 'invade', 'invalid',
+            'inveigh', 'invent', 'inverse', 'invert', 'invest', 'invite', 'invoice', 'invoke', 'involve', 'inward', 'iota',
+            'irate', 'ire', 'irk', 'iron', 'irony', 'irrigate', 'irritate', 'isle', 'isolate', 'issue', 'italic', 'itch',
+            'item', 'iterate', 'itinerate', 'ivory', 'jab', 'jack', 'jackal', 'jacket', 'jade', 'jag', 'jail', 'jam',
+            'jangle', 'janitor', 'jar', 'jargon', 'jaunt', 'jaw', 'jazz', 'jealous', 'jeans', 'jelly', 'jerk', 'jest',
+            'jet', 'jewel', 'jig', 'jilt', 'jingle', 'job', 'jockey', 'jog', 'join', 'joint', 'joke', 'jolly', 'jolt',
+            'jot', 'joust', 'joy', 'judge', 'judgment', 'judo', 'jug', 'juggler', 'juice', 'julep', 'jumble', 'jump',
+            'jumper', 'jungle', 'junior', 'junk', 'junta', 'junto', 'juror', 'just', 'justice', 'jut', 'juvenile', 'kangaroo',
+            'keen', 'keep', 'keg', 'kelp', 'ken', 'kennel', 'kept', 'kernel', 'ketch', 'key', 'kick', 'kid', 'kill', 'kin',
+            'kind', 'kindle', 'king', 'kink', 'kiosk', 'kiss', 'kit', 'kite', 'kitten', 'knack', 'knave', 'knead', 'knee',
+            'kneel', 'knell', 'knife', 'knight', 'knit', 'knob', 'knock', 'knot', 'know', 'known', 'knuckle', 'koala',
+            'label', 'labor', 'lace', 'lack', 'lacy', 'lad', 'laden', 'ladle', 'lag', 'lake', 'lamb', 'lame', 'lament',
+            'lamp', 'land', 'lane', 'language', 'languid', 'languish', 'lap', 'lapse', 'lard', 'large', 'lark', 'larva',
+            'lash', 'lass', 'last', 'latch', 'late', 'latent', 'later', 'latest', 'lathe', 'latitude', 'latter', 'laud',
+            'laugh', 'launch', 'laundry', 'laurel', 'lava', 'lavish', 'law', 'lawn', 'lawsuit', 'lax', 'laxative', 'lay',
+            'layer', 'layman', 'layoff', 'lazy', 'lead', 'leaf', 'league', 'leak', 'lean', 'leap', 'learn', 'lease',
+            'leash', 'least', 'leave', 'ledge', 'leech', 'leek', 'leer', 'left', 'leg', 'legacy', 'legal', 'legend',
+            'legerdemain', 'legion', 'legislate', 'legitimate', 'leisure', 'lemon', 'lend', 'length', 'lenient', 'lens',
+            'leopard', 'less', 'lesson', 'lest', 'let', 'lethal', 'lethargy', 'letter', 'lettuce', 'level', 'lever',
+            'leverage', 'leviathan', 'levy', 'lewd', 'liability', 'liable', 'liar', 'libel', 'liberal', 'liberate', 'liberty',
+            'librarian', 'library', 'licit', 'lick', 'lid', 'lie', 'lien', 'life', 'lift', 'light', 'like', 'likely',
+            'liken', 'likewise', 'lilac', 'lilt', 'lily', 'limb', 'limber', 'lime', 'limit', 'limn', 'limp', 'line',
+            'linear', 'linen', 'linger', 'link', 'lint', 'lion', 'lip', 'liquid', 'liquor', 'list', 'listen', 'lit',
+            'liter', 'literal', 'literate', 'lithe', 'litmus', 'litter', 'little', 'live', 'lively', 'liver', 'livestock',
+            'livid', 'living', 'lizard', 'llama', 'load', 'loaf', 'loam', 'loan', 'loath', 'loathe', 'lobby', 'lobe',
+            'local', 'locate', 'lock', 'locket', 'locus', 'locust', 'lode', 'loft', 'log', 'logic', 'loin', 'loiter',
+            'loll', 'lone', 'lonely', 'long', 'look', 'loop', 'loose', 'loot', 'lop', 'lope', 'lord', 'lore', 'lorn',
+            'lose', 'loss', 'lost', 'lot', 'lotion', 'lottery', 'lotus', 'loud', 'lounge', 'louse', 'lout', 'love',
+            'lovely', 'lover', 'low', 'lower', 'lowly', 'loyal', 'lucid', 'luck', 'lug', 'lull', 'lumber', 'lumen',
+            'lump', 'lunar', 'lunch', 'lung', 'lunge', 'lurch', 'lure', 'lurid', 'lurk', 'lush', 'lust', 'luster', 'lusty',
+            'lute', 'luxury', 'lying', 'lynx', 'lyre', 'lyric', 'macabre', 'mace', 'machine', 'machismo', 'macho', 'macro',
+            'mad', 'madam', 'madden', 'made', 'madman', 'madness', 'maestro', 'magazine', 'maggot', 'magic', 'magma',
+            'magnet', 'magnificent', 'magnify', 'magnitude', 'maggot', 'maid', 'mail', 'main', 'maintain', 'majesty',
+            'major', 'make', 'maker', 'makeup', 'male', 'malice', 'malign', 'mall', 'malt', 'mammal', 'mammoth', 'man',
+            'manage', 'mane', 'mangle', 'mango', 'manhood', 'mania', 'maniac', 'manic', 'manifold', 'manipulate', 'mankind',
+            'manner', 'manor', 'mantle', 'manual', 'manufacture', 'manure', 'many', 'map', 'mar', 'marble', 'march', 'mare',
+            'margin', 'marine', 'mark', 'market', 'marksman', 'marriage', 'marrow', 'marry', 'marsh', 'martyr', 'marvel',
+            'mason', 'mass', 'massive', 'mast', 'master', 'mat', 'match', 'mate', 'material', 'maternal', 'math', 'matin',
+            'matrimony', 'matrix', 'matter', 'mature', 'maudlin', 'maul', 'mausoleum', 'mauve', 'maverick', 'maxim', 'maximum',
+            'may', 'maybe', 'mayor', 'maze', 'mead', 'meadow', 'meager', 'meal', 'mean', 'meander', 'meaning', 'meant',
+            'measure', 'meat', 'mechanic', 'medal', 'meddle', 'media', 'median', 'mediate', 'medic', 'meditate', 'medium',
+            'medley', 'meek', 'meet', 'megaton', 'melody', 'melon', 'melt', 'member', 'memoir', 'memorandum', 'memory',
+            'menace', 'mend', 'mental', 'menthol', 'mention', 'mentor', 'menu', 'merchant', 'mercury', 'mercy', 'mere',
+            'merge', 'merit', 'merry', 'mesh', 'mesmerize', 'mess', 'metal', 'metamorphosis', 'meteor', 'method', 'meticulous',
+            'metropolis', 'mettle', 'mew', 'mica', 'micro', 'mid', 'midday', 'middle', 'midget', 'midst', 'mien', 'miff',
+            'might', 'mighty', 'migrant', 'mild', 'mile', 'militant', 'military', 'milk', 'mill', 'mime', 'mimic', 'mince',
+            'mind', 'mine', 'mineral', 'mingle', 'mini', 'minimum', 'minor', 'mint', 'minute', 'miracle', 'mire', 'mirror',
+            'mirth', 'mischief', 'miser', 'misery', 'miss', 'mist', 'mistake', 'mister', 'mistress', 'misty', 'mite',
+            'mitigate', 'mitt', 'mix', 'moan', 'moat', 'mob', 'mobile', 'mobster', 'moccasin', 'mock', 'mod', 'mode',
+            'model', 'modem', 'moderate', 'modern', 'modest', 'modify', 'mogul', 'moist', 'molar', 'mold', 'mole', 'molest',
+            'mollify', 'molt', 'moment', 'momentous', 'momentum', 'monarch', 'monastery', 'monetary', 'money', 'monitor',
+            'monk', 'monkey', 'monologue', 'monopoly', 'monotonous', 'monster', 'month', 'monument', 'mood', 'moon', 'moor',
+            'moot', 'mop', 'moral', 'morale', 'morbid', 'more', 'morgue', 'moribund', 'morn', 'morning', 'moron', 'morrow',
+            'morsel', 'mortal', 'mortar', 'mortgage', 'mortify', 'mosaic', 'mosquito', 'moss', 'most', 'motel', 'moth',
+            'mother', 'motion', 'motive', 'motor', 'motto', 'mound', 'mount', 'mourn', 'mouse', 'mouth', 'move', 'movie',
+            'mow', 'much', 'muck', 'mud', 'muffle', 'mug', 'mulberry', 'mule', 'mull', 'multiple', 'multiply', 'mumble',
+            'mummer', 'mummy', 'mumps', 'munch', 'mundane', 'municipal', 'mural', 'murder', 'murky', 'murmur', 'muscle',
+            'museum', 'mush', 'mushroom', 'music', 'musical', 'musk', 'musket', 'muskrat', 'must', 'mustard', 'muster',
+            'musty', 'mutable', 'mutant', 'mutation', 'mute', 'mutilate', 'mutiny', 'mutter', 'mutton', 'mutual', 'muzzle',
+            'my', 'myriad', 'mysterious', 'mystery', 'myth', 'naive', 'naked', 'name', 'nap', 'nape', 'napkin', 'narcotic',
+            'narrate', 'narrow', 'nasal', 'nasty', 'nation', 'nature', 'naught', 'naughty', 'naval', 'nave', 'navy', 'nay',
+            'neat', 'nebula', 'necessary', 'neck', 'need', 'needle', 'negate', 'negative', 'neglect', 'negligee', 'negotiate',
+            'neighbor', 'neither', 'neon', 'nephew', 'nerve', 'nervous', 'nest', 'net', 'neuter', 'neutral', 'never', 'new',
+            'news', 'newt', 'next', 'nibble', 'nice', 'niche', 'nick', 'nickel', 'niece', 'night', 'nimble', 'nine', 'ninja',
+            'nip', 'nit', 'noble', 'node', 'noise', 'noisome', 'nomad', 'nonce', 'none', 'nonsense', 'noon', 'nor', 'norm',
+            'normal', 'north', 'nose', 'nostril', 'not', 'notable', 'note', 'nothing', 'notice', 'notion', 'notorious',
+            'nourish', 'novel', 'novice', 'now', 'nowhere', 'nozzle', 'nucleus', 'nude', 'nudge', 'null', 'numb', 'number',
+            'numerous', 'nun', 'nurse', 'nurture', 'nut', 'nymph', 'oasis', 'oath', 'obdurate', 'obedient', 'obelisk',
+            'obese', 'obey', 'object', 'oblige', 'oblong', 'obnoxious', 'obscure', 'observe', 'obsess', 'obsolete', 'obstacle',
+            'obstruct', 'obtain', 'obtrude', 'obtuse', 'obverse', 'obviate', 'obvious', 'occasion', 'occident', 'occlude',
+            'occult', 'occupy', 'occur', 'ocean', 'octagon', 'octave', 'octet', 'octopus', 'odd', 'odium', 'odor', 'off',
+            'offend', 'offer', 'office', 'official', 'offspring', 'often', 'ogle', 'ogre', 'oil', 'old', 'olive', 'omen',
+            'omit', 'once', 'one', 'onerous', 'onset', 'open', 'opera', 'operate', 'opinion', 'opium', 'opponent', 'opportune',
+            'oppose', 'oppress', 'opt', 'optic', 'option', 'opulent', 'oracle', 'oral', 'orange', 'orbit', 'orchard', 'orchestra',
+            'ordain', 'order', 'ordinary', 'ore', 'organ', 'orient', 'origin', 'oriole', 'ornament', 'ornate', 'orphan',
+            'oscillate', 'osprey', 'ossify', 'ostensible', 'ostrich', 'other', 'otherwise', 'otter', 'ought', 'ounce', 'our',
+            'oust', 'out', 'outcast', 'outcome', 'outcry', 'outdo', 'outer', 'outfit', 'outgoing', 'outlaw', 'outlet', 'outline',
+            'outlook', 'output', 'outrage', 'outright', 'outset', 'outside', 'outskirts', 'outstrip', 'outward', 'ovation',
+            'oven', 'over', 'overall', 'overcome', 'overflow', 'overhead', 'overlook', 'overnight', 'overseer', 'oversight',
+            'overt', 'overthrow', 'overture', 'oviduct', 'ovine', 'ovoid', 'ovulate', 'owe', 'owl', 'own', 'owner', 'ox',
+            'oxide', 'oxygen', 'oyster', 'ozone', 'pace', 'pack', 'pact', 'pad', 'page', 'pail', 'pain', 'paint', 'pair',
+            'pal', 'palace', 'pale', 'pall', 'palm', 'palpable', 'paltry', 'pan', 'panel', 'pang', 'panic', 'pant', 'paper',
+            'parable', 'parade', 'paradise', 'paragon', 'parallax', 'parallel', 'paralyze', 'paramount', 'parasite', 'parcel',
+            'parch', 'pardon', 'parent', 'park', 'parley', 'parliament', 'parody', 'parole', 'parry', 'parse', 'part',
+            'partial', 'particle', 'particular', 'partisan', 'partition', 'partner', 'party', 'pass', 'passage', 'passenger',
+            'passion', 'passive', 'past', 'paste', 'pastel', 'pastor', 'pastry', 'patch', 'patent', 'path', 'patience',
+            'patient', 'patriot', 'patrol', 'patron', 'pattern', 'pause', 'pave', 'paw', 'pay', 'peace', 'peak', 'peal',
+            'peasant', 'pebble', 'pecan', 'peck', 'peculiar', 'pedal', 'peddle', 'pedestal', 'pediatric', 'peek', 'peel',
+            'peer', 'peg', 'pelt', 'pen', 'penalty', 'pencil', 'pendant', 'pending', 'penetrate', 'penguin', 'peninsula',
+            'penitent', 'penny', 'pension', 'pentagon', 'people', 'pepper', 'per', 'perceive', 'percent', 'perch', 'perfect',
+            'perform', 'perfume', 'perhaps', 'peril', 'perimeter', 'period', 'perish', 'perjure', 'permanent', 'permeate',
+            'permit', 'pernicious', 'perpendicular', 'perpetrate', 'perpetual', 'perplex', 'persecute', 'persevere', 'persist',
+            'person', 'perspective', 'persuade', 'pertain', 'pertinent', 'perturb', 'peruse', 'pervade', 'perverse', 'pest',
+            'pester', 'pet', 'petal', 'petition', 'petrify', 'petrol', 'petty', 'phantom', 'phase', 'pheasant', 'phenomenon',
+            'phial', 'philanthropy', 'philosophy', 'phlegm', 'phone', 'phonics', 'phony', 'phosphate', 'photo', 'phrase',
+            'physical', 'physician', 'pick', 'pickle', 'pickpocket', 'picnic', 'picture', 'pie', 'piece', 'pier', 'pierce',
+            'piety', 'pig', 'pigeon', 'pigment', 'pile', 'pilfer', 'pilgrim', 'pill', 'pillage', 'pillar', 'pillow', 'pilot',
+            'pin', 'pince', 'pinch', 'pine', 'pineapple', 'ping', 'pink', 'pinnacle', 'pioneer', 'pipe', 'pirate', 'pistol',
+            'piston', 'pit', 'pitch', 'pitcher', 'pith', 'pittance', 'pity', 'pivot', 'pixel', 'pixie', 'pizza', 'place',
+            'placid', 'plagiarize', 'plague', 'plain', 'plan', 'plane', 'planet', 'plank', 'plant', 'plasma', 'plastic',
+            'plate', 'platform', 'platinum', 'platoon', 'platter', 'plausible', 'play', 'player', 'plea', 'plead', 'pleasant',
+            'please', 'pleasure', 'plentiful', 'plenty', 'plethora', 'pliable', 'pliant', 'plight', 'plod', 'plot', 'plough',
+            'plover', 'ploy', 'pluck', 'plug', 'plum', 'plumb', 'plume', 'plump', 'plunder', 'plunge', 'plural', 'plus',
+            'plush', 'plutonium', 'pneumonia', 'poach', 'pocket', 'pod', 'poem', 'poet', 'poetry', 'point', 'poise', 'poison',
+            'poke', 'polar', 'pole', 'police', 'policy', 'polish', 'polite', 'political', 'politician', 'poll', 'pollute',
+            'polo', 'polygon', 'pompadour', 'pond', 'ponder', 'pony', 'pool', 'poor', 'pop', 'pope', 'popular', 'populace',
+            'porch', 'pore', 'pork', 'porous', 'port', 'portend', 'portion', 'portly', 'portrait', 'pose', 'position', 'positive',
+            'possess', 'possible', 'post', 'posterior', 'postpone', 'postulate', 'pot', 'potato', 'potent', 'potion', 'pottery',
+            'pouch', 'poultice', 'poultry', 'pound', 'pour', 'poverty', 'powder', 'power', 'practical', 'practice', 'praise',
+            'prance', 'prank', 'pray', 'preach', 'precede', 'precept', 'precinct', 'precious', 'precipice', 'precise', 'preclude',
+            'predatory', 'predicament', 'predict', 'predilection', 'predominate', 'preeminent', 'preen', 'preface', 'prefer',
+            'prefix', 'pregnancy', 'prejudice', 'preliminary', 'prelude', 'premature', 'premier', 'premise', 'premium',
+            'premonition', 'preoccupy', 'preparation', 'prepare', 'preposterous', 'prerogative', 'prescribe', 'presence',
+            'present', 'preserve', 'preside', 'press', 'pressure', 'prestige', 'presume', 'pretend', 'pretext', 'pretty',
+            'prevail', 'prevent', 'preview', 'previous', 'prey', 'price', 'prick', 'pride', 'priest', 'prig', 'prim', 'prima',
+            'primary', 'prime', 'primitive', 'prince', 'princess', 'principal', 'principle', 'print', 'prior', 'priority',
+            'prison', 'pristine', 'private', 'privilege', 'prize', 'pro', 'probable', 'probe', 'problem', 'procedure', 'proceed',
+            'proclaim', 'proclivity', 'procrastinate', 'procreate', 'procure', 'prod', 'prodigal', 'prodigy', 'produce',
+            'product', 'profane', 'profess', 'professional', 'professor', 'proffer', 'proficient', 'profit', 'profound',
+            'program', 'progress', 'project', 'proletarian', 'prolific', 'prologue', 'prolong', 'promenade', 'prominent',
+            'promise', 'promontory', 'promote', 'prompt', 'prone', 'pronounce', 'proof', 'prop', 'propagate', 'propel',
+            'proper', 'property', 'prophecy', 'prophet', 'proponent', 'proportion', 'proposal', 'propose', 'proprietor',
+            'propriety', 'propulsion', 'prosaic', 'proscribe', 'prose', 'prosecute', 'prospect', 'prosper', 'prostrate',
+            'protect', 'protein', 'protest', 'protocol', 'protract', 'protrude', 'proud', 'prove', 'proverb', 'provide',
+            'provident', 'province', 'provision', 'provoke', 'prow', 'prowess', 'prowl', 'proximate', 'proxy', 'prude',
+            'prudent', 'prune', 'pry', 'psalm', 'pseudo', 'psychic', 'psychology', 'pub', 'public', 'publish', 'puck',
+            'puddle', 'puerile', 'puff', 'pug', 'pull', 'pulp', 'pulse', 'pumice', 'pump', 'pumpkin', 'pun', 'punch',
+            'punctual', 'punctuate', 'puncture', 'pungent', 'punish', 'punk', 'punt', 'puny', 'pup', 'pupil', 'puppet',
+            'puppy', 'purchase', 'pure', 'purge', 'purify', 'purist', 'purity', 'purple', 'purport', 'purpose', 'purr',
+            'purse', 'pursue', 'purvey', 'push', 'put', 'putrid', 'putter', 'puzzle', 'pygmy', 'pyramid', 'python',
+            'quack', 'quadrant', 'quadruple', 'quaff', 'quail', 'quake', 'qualify', 'quality', 'qualm', 'quantity', 'quarrel',
+            'quarter', 'quash', 'quasi', 'quaver', 'quay', 'queen', 'queer', 'quell', 'query', 'quest', 'question', 'queue',
+            'quick', 'quiet', 'quill', 'quilt', 'quince', 'quintessence', 'quip', 'quirk', 'quit', 'quiver', 'quiz',
+            'quizzical', 'quorum', 'quota', 'quote', 'quotient', 'rabbit', 'race', 'rack', 'racket', 'radar', 'radiant',
+            'radiate', 'radical', 'radio', 'radish', 'radius', 'raffle', 'raft', 'rag', 'rage', 'raid', 'rail', 'rain',
+            'raise', 'raisin', 'rake', 'rally', 'ram', 'ramble', 'ramp', 'rampage', 'rampant', 'ranch', 'random', 'range',
+            'rank', 'ransom', 'rap', 'rape', 'rapid', 'rapport', 'rapt', 'rare', 'rash', 'rasp', 'rat', 'rate', 'rather',
+            'ratify', 'ratio', 'ration', 'rational', 'rattle', 'ravage', 'rave', 'ravel', 'raven', 'ravine', 'raving',
+            'raw', 'ray', 'raze', 'reach', 'react', 'read', 'ready', 'real', 'realize', 'realm', 'ream', 'reap', 'rear',
+            'reason', 'rebel', 'rebuff', 'rebuke', 'rebut', 'recall', 'recede', 'receipt', 'receive', 'recent', 'receptacle',
+            'recess', 'recipe', 'recipient', 'recital', 'recite', 'reckless', 'reckon', 'reclaim', 'recline', 'recluse',
+            'recognize', 'recoil', 'recollect', 'recommend', 'reconcile', 'recondite', 'record', 'recount', 'recourse',
+            'recover', 'recreation', 'recruit', 'rectangle', 'rectify', 'rector', 'recumbent', 'recur', 'red', 'redeem',
+            'redemption', 'redress', 'reduce', 'redundant', 'reed', 'reef', 'reek', 'reel', 'refer', 'refine', 'reflect',
+            'reflex', 'reform', 'refrain', 'refresh', 'refrigerate', 'refuge', 'refund', 'refurbish', 'refuse', 'refute',
+            'regain', 'regal', 'regale', 'regard', 'regenerate', 'regent', 'regime', 'regiment', 'register', 'regress',
+            'regret', 'regular', 'regulate', 'rehabilitate', 'rehearse', 'reign', 'rein', 'reiterate', 'reject', 'rejoice',
+            'rejoin', 'relapse', 'relate', 'relative', 'relax', 'relay', 'release', 'relent', 'relevant', 'reliable',
+            'reliance', 'relic', 'relief', 'relieve', 'religion', 'relish', 'reluctant', 'rely', 'remain', 'remark',
+            'remedy', 'remember', 'remind', 'reminisce', 'remiss', 'remit', 'remnant', 'remorse', 'remote', 'remove',
+            'render', 'renegade', 'renew', 'renounce', 'renovate', 'renown', 'rent', 'repair', 'reparation', 'repay',
+            'repeal', 'repeat', 'repel', 'repent', 'repercussion', 'repertoire', 'repetition', 'replace', 'replenish',
+            'replete', 'replica', 'reply', 'report', 'repose', 'represent', 'repress', 'reprieve', 'reprimand', 'reprisal',
+            'reproach', 'reprobate', 'reproduce', 'reptile', 'republic', 'repudiate', 'repugnant', 'repulse', 'reputation',
+            'request', 'require', 'requisite', 'rescue', 'research', 'resemble', 'resent', 'reserve', 'reside', 'residue',
+            'resign', 'resilient', 'resin', 'resist', 'resolve', 'resonant', 'resort', 'resource', 'respect', 'respire',
+            'respite', 'respond', 'rest', 'restaurant', 'restful', 'restive', 'restore', 'restrain', 'restrict', 'result',
+            'resume', 'retail', 'retain', 'retaliate', 'retard', 'retch', 'retire', 'retort', 'retrace', 'retract', 'retreat',
+            'retrieve', 'retrograde', 'retrospect', 'return', 'reveal', 'revel', 'revenge', 'revenue', 'reverberate', 'revere',
+            'reverie', 'reverse', 'revert', 'review', 'revile', 'revise', 'revive', 'revoke', 'revolt', 'revolution', 'revolve',
+            'reward', 'rhapsody', 'rhetoric', 'rhino', 'rhyme', 'rhythm', 'rib', 'ribald', 'ribbon', 'rice', 'rich', 'ride',
+            'rider', 'ridge', 'ridicule', 'rifle', 'rift', 'rig', 'right', 'rigid', 'rigor', 'rill', 'rim', 'ring', 'rink',
+            'rinse', 'riot', 'ripe', 'ripple', 'rise', 'risk', 'rite', 'ritual', 'rival', 'river', 'rivet', 'roach', 'road',
+            'roam', 'roar', 'roast', 'rob', 'robe', 'robot', 'robust', 'rock', 'rocket', 'rod', 'rodent', 'roe', 'rogue',
+            'roll', 'romance', 'romp', 'rood', 'roof', 'rook', 'room', 'roost', 'root', 'rope', 'rose', 'roster', 'rosy',
+            'rot', 'rotate', 'rotor', 'rotten', 'rouge', 'rough', 'round', 'rouse', 'route', 'routine', 'rove', 'row',
+            'royal', 'rub', 'rubble', 'ruby', 'rude', 'ruff', 'ruffian', 'rug', 'ruin', 'rule', 'rum', 'rumble', 'ruminant',
+            'rummage', 'rumor', 'rump', 'run', 'rung', 'runic', 'runway', 'rupture', 'rural', 'ruse', 'rush', 'rust',
+            'rustic', 'rustle', 'rut', 'ruthless', 'sabbath', 'sable', 'sabotage', 'sac', 'sacred', 'sacrifice', 'sacrilege',
+            'sad', 'saddle', 'sadism', 'sadness', 'safari', 'safe', 'saffron', 'sag', 'sage', 'sail', 'saint', 'sake',
+            'salad', 'salamander', 'salary', 'sale', 'salient', 'saline', 'saliva', 'sallow', 'sally', 'salmon', 'salon',
+            'saloon', 'salt', 'salute', 'salvage', 'salve', 'same', 'sample', 'sanctify', 'sanction', 'sanctuary', 'sand',
+            'sane', 'sang', 'sanguine', 'sanitary', 'sanity', 'sank', 'sap', 'sarcasm', 'sarcophagus', 'sardine', 'sash',
+            'satan', 'satchel', 'sate', 'satellite', 'satiate', 'satin', 'satire', 'satisfy', 'saturate', 'satyr', 'sauce',
+            'saucer', 'saucy', 'saunter', 'sausage', 'savage', 'savant', 'save', 'savior', 'savor', 'savory', 'saw', 'sax',
+            'say', 'scab', 'scaffold', 'scald', 'scale', 'scallop', 'scalp', 'scam', 'scamp', 'scan', 'scandal', 'scant',
+            'scapegoat', 'scar', 'scarce', 'scare', 'scarf', 'scary', 'scathe', 'scatter', 'scavenger', 'scene', 'scent',
+            'schedule', 'schema', 'scheme', 'schism', 'scholar', 'school', 'science', 'scientist', 'scintillate', 'scion',
+            'scissors', 'scoff', 'scold', 'scoop', 'scope', 'score', 'scorn', 'scorpion', 'scotch', 'scoundrel', 'scour',
+            'scout', 'scow', 'scowl', 'scramble', 'scrap', 'scrape', 'scratch', 'scrawl', 'scream', 'screech', 'screen',
+            'screw', 'scribble', 'scribe', 'scroll', 'scrub', 'scrutinize', 'sculpture', 'scurry', 'seal', 'seam', 'sear',
+            'search', 'seas', 'season', 'seat', 'sec', 'secede', 'seclude', 'second', 'secret', 'sect', 'section', 'secular',
+            'secure', 'sedan', 'sedate', 'sediment', 'seduce', 'see', 'seed', 'seek', 'seem', 'seep', 'seer', 'segment',
+            'segregate', 'seize', 'seldom', 'select', 'self', 'sell', 'semester', 'semicolon', 'senate', 'send', 'senior',
+            'sensation', 'sense', 'sensitive', 'sentence', 'sentiment', 'sentry', 'sepal', 'separate', 'sepia', 'sept',
+            'sequel', 'sequence', 'serene', 'sergeant', 'serial', 'series', 'sermon', 'serpent', 'serum', 'servant', 'serve',
+            'service', 'servile', 'session', 'set', 'settee', 'settle', 'setup', 'seven', 'sever', 'several', 'severe', 'sew',
+            'sex', 'shack', 'shade', 'shadow', 'shaft', 'shag', 'shake', 'shale', 'shall', 'sham', 'shame', 'shampoo',
+            'shape', 'share', 'shark', 'sharp', 'shave', 'shawl', 'she', 'sheaf', 'shear', 'sheath', 'shed', 'sheep', 'sheer',
+            'sheet', 'shelf', 'shell', 'shelter', 'shepherd', 'shield', 'shift', 'shin', 'shine', 'ship', 'shirk', 'shirt',
+            'shiver', 'shock', 'shoe', 'shoot', 'shop', 'shore', 'short', 'shot', 'should', 'shout', 'shove', 'show',
+            'shower', 'shred', 'shrew', 'shrewd', 'shriek', 'shrill', 'shrine', 'shrink', 'shroud', 'shrub', 'shrug',
+            'shudder', 'shuffle', 'shun', 'shunt', 'shut', 'shy', 'sick', 'side', 'siege', 'sift', 'sigh', 'sight', 'sign',
+            'signal', 'silence', 'silent', 'silk', 'sill', 'silly', 'silt', 'silver', 'similar', 'simple', 'simulate',
+            'sin', 'since', 'sincere', 'sinew', 'sing', 'single', 'sink', 'sip', 'sir', 'siren', 'sister', 'sit', 'site',
+            'situation', 'six', 'size', 'skeleton', 'sketch', 'ski', 'skill', 'skim', 'skin', 'skip', 'skirmish', 'skirt',
+            'skit', 'skull', 'skunk', 'sky', 'slab', 'slack', 'slain', 'slake', 'slam', 'slang', 'slant', 'slap', 'slash',
+            'slate', 'slave', 'slay', 'sled', 'sleek', 'sleep', 'sleet', 'sleeve', 'slew', 'slice', 'slick', 'slide', 'slight',
+            'slim', 'slime', 'sling', 'slink', 'slip', 'slit', 'slither', 'slob', 'slog', 'slogan', 'slope', 'slot', 'sloth',
+            'slow', 'sludge', 'slue', 'slug', 'slum', 'slumber', 'slump', 'slung', 'slur', 'slurp', 'sly', 'smack', 'small',
+            'smart', 'smash', 'smear', 'smell', 'smelt', 'smile', 'smirk', 'smite', 'smock', 'smog', 'smoke', 'smolder',
+            'smooth', 'smother', 'smug', 'snack', 'snafu', 'snag', 'snake', 'snap', 'snare', 'snarl', 'snatch', 'sneak',
+            'sneer', 'sniff', 'snip', 'snob', 'snoop', 'snore', 'snort', 'snow', 'snub', 'snuff', 'snug', 'soak', 'soap',
+            'soar', 'sob', 'sober', 'soccer', 'social', 'sock', 'sod', 'soda', 'sofa', 'soft', 'soil', 'solar', 'sold',
+            'sole', 'solid', 'solo', 'solve', 'some', 'son', 'song', 'soon', 'soot', 'sop', 'sore', 'sorrow', 'sort',
+            'soul', 'sound', 'soup', 'sour', 'source', 'south', 'sow', 'space', 'spade', 'spaghetti', 'span', 'spank',
+            'spar', 'spare', 'spark', 'sparse', 'spat', 'spawn', 'speak', 'spear', 'special', 'species', 'specific', 'speck',
+            'spectacle', 'spectator', 'specter', 'spectrum', 'speculate', 'speech', 'speed', 'spell', 'spend', 'sperm',
+            'sphere', 'spice', 'spider', 'spike', 'spill', 'spin', 'spirit', 'spit', 'spite', 'splash', 'splatter', 'splay',
+            'splendor', 'splice', 'split', 'spoil', 'spoke', 'sponge', 'sponsor', 'spoof', 'spook', 'spool', 'spoon', 'spore',
+            'sport', 'spot', 'spouse', 'spout', 'sprawl', 'spray', 'spread', 'spree', 'spring', 'sprout', 'spruce', 'spry',
+            'spud', 'spur', 'spurn', 'spurt', 'sputter', 'spy', 'squad', 'squall', 'squander', 'square', 'squash', 'squat',
+            'squeak', 'squeal', 'squeeze', 'squint', 'squire', 'squirm', 'squirrel', 'squirt', 'stab', 'stable', 'stack',
+            'stadium', 'staff', 'stag', 'stage', 'stagger', 'stagnant', 'stain', 'stair', 'stake', 'stale', 'stalk', 'stall',
+            'stammer', 'stamp', 'stand', 'stank', 'staple', 'star', 'stare', 'stark', 'starry', 'start', 'starve', 'state',
+            'statue', 'stature', 'status', 'statute', 'stave', 'stay', 'stead', 'steady', 'steak', 'steal', 'steam', 'steed',
+            'steel', 'steep', 'steer', 'stegosaurus', 'stellar', 'stem', 'step', 'stern', 'stew', 'stick', 'stiff', 'stifle',
+            'stigma', 'still', 'stimulate', 'sting', 'stink', 'stint', 'stipulate', 'stir', 'stitch', 'stock', 'stoke',
+            'stole', 'stomach', 'stone', 'stood', 'stool', 'stoop', 'stop', 'store', 'stork', 'storm', 'story', 'stout',
+            'stove', 'stow', 'straggle', 'straight', 'strain', 'strait', 'strand', 'strange', 'strangle', 'strap', 'straw',
+            'stray', 'streak', 'stream', 'street', 'strength', 'stretch', 'strident', 'strike', 'string', 'strip', 'stripe',
+            'strive', 'stroke', 'stroll', 'strong', 'struck', 'strum', 'strut', 'stuck', 'stud', 'student', 'study', 'stuff',
+            'stumble', 'stump', 'stun', 'stunt', 'stupendous', 'stupid', 'sturdy', 'stutter', 'style', 'suave', 'sub',
+            'subdue', 'subject', 'sublime', 'submarine', 'submerge', 'submit', 'subordinate', 'subpoena', 'subscribe', 'subside',
+            'subsist', 'substance', 'substantial', 'substitute', 'subterfuge', 'subtle', 'subtract', 'suburb', 'subvert',
+            'succeed', 'succinct', 'succumb', 'such', 'suck', 'suckle', 'suede', 'suffer', 'suffice', 'suffix', 'suffocate',
+            'sugar', 'suggest', 'suit', 'suite', 'sullen', 'sultry', 'sum', 'summarize', 'summer', 'summit', 'summon',
+            'sumptuous', 'sun', 'sunder', 'sung', 'sunk', 'sunny', 'sunset', 'super', 'superb', 'superficial', 'superior',
+            'superstition', 'supervise', 'supper', 'supple', 'supplement', 'supply', 'support', 'suppose', 'suppress',
+            'supreme', 'sure', 'surf', 'surface', 'surge', 'surgeon', 'surgery', 'surname', 'surpass', 'surplus', 'surprise',
+            'surrender', 'surround', 'survey', 'survive', 'susceptible', 'suspect', 'suspend', 'suspense', 'suspicion',
+            'sustain', 'suture', 'swab', 'swallow', 'swamp', 'swan', 'swap', 'swarm', 'swath', 'sway', 'swear', 'sweat',
+            'sweep', 'sweet', 'swell', 'swept', 'swift', 'swim', 'swindle', 'swing', 'swipe', 'swirl', 'switch', 'swivel',
+            'swollen', 'swoon', 'swoop', 'sword', 'swore', 'sworn', 'swum', 'swung', 'sycamore', 'syllable', 'symbol',
+            'symmetry', 'sympathy', 'symphony', 'syndrome', 'synonym', 'syntax', 'synthesize', 'syringe', 'syrup', 'system',
+            'table', 'tableau', 'tablet', 'taboo', 'tacit', 'tack', 'tact', 'tactic', 'tag', 'tail', 'tailor', 'take',
+            'tale', 'talent', 'talk', 'tall', 'tame', 'tan', 'tang', 'tangle', 'tank', 'tap', 'tape', 'tar', 'target',
+            'tariff', 'tarnish', 'tarry', 'tart', 'task', 'taste', 'tat', 'tatter', 'tattoo', 'taunt', 'taut', 'tavern',
+            'tax', 'taxi', 'tea', 'teach', 'team', 'tear', 'tease', 'teat', 'technical', 'tedium', 'tee', 'teem', 'teen',
+            'teeter', 'teeth', 'telegram', 'telephone', 'telescope', 'television', 'tell', 'temper', 'temperament', 'temperature',
+            'temple', 'tempo', 'tempt', 'ten', 'tenant', 'tend', 'tender', 'tenet', 'tennis', 'tenor', 'tense', 'tension',
+            'tent', 'tenuous', 'tenure', 'tepee', 'tepid', 'term', 'terminal', 'terminate', 'terrace', 'terrain', 'terrible',
+            'terrier', 'terrify', 'territory', 'terror', 'terse', 'test', 'testament', 'testify', 'testimony', 'testy', 'text',
+            'than', 'thank', 'that', 'thaw', 'the', 'theater', 'thee', 'theft', 'their', 'them', 'theme', 'then', 'there',
+            'these', 'they', 'thick', 'thief', 'thigh', 'thin', 'thing', 'think', 'third', 'thirst', 'thirteen', 'this',
+            'thistle', 'thorn', 'those', 'though', 'thought', 'thousand', 'thrall', 'thrash', 'thread', 'threat', 'three',
+            'thresh', 'thrice', 'thrift', 'thrill', 'thrive', 'throat', 'throb', 'throne', 'throng', 'through', 'throw',
+            'thrum', 'thrust', 'thud', 'thug', 'thumb', 'thump', 'thunder', 'thus', 'thy', 'thyme', 'tiara', 'tick', 'ticket',
+            'tide', 'tidy', 'tie', 'tier', 'tiger', 'tight', 'til', 'tile', 'till', 'tilt', 'timber', 'time', 'timid',
+            'tin', 'tinct', 'tinge', 'tinker', 'tinkle', 'tint', 'tiny', 'tip', 'tire', 'tissue', 'titan', 'title', 'to',
+            'toad', 'toast', 'today', 'toe', 'together', 'toil', 'token', 'told', 'tolerate', 'toll', 'tomato', 'tomb',
+            'tomorrow', 'ton', 'tone', 'tong', 'tongue', 'tonic', 'tonight', 'too', 'took', 'tool', 'toot', 'tooth', 'top',
+            'topic', 'topple', 'torch', 'tore', 'torment', 'torn', 'torpedo', 'torrent', 'tortoise', 'toss', 'total', 'totem',
+            'touch', 'tough', 'tour', 'tourist', 'tournament', 'tout', 'tow', 'toward', 'towel', 'tower', 'town', 'toxic',
+            'toy', 'trace', 'track', 'tract', 'trade', 'tradition', 'traffic', 'tragedy', 'trail', 'train', 'trait', 'tram',
+            'tramp', 'trample', 'tranquil', 'transaction', 'transcend', 'transfer', 'transform', 'transient', 'transit',
+            'translate', 'transmit', 'transparent', 'transport', 'transpose', 'trap', 'trash', 'travel', 'tray', 'treachery',
+            'tread', 'treasure', 'treat', 'treaty', 'tree', 'trek', 'tremble', 'tremendous', 'trench', 'trend', 'trial',
+            'triangle', 'tribe', 'tribunal', 'tribute', 'trick', 'trifle', 'trigger', 'trim', 'trinity', 'trio', 'trip',
+            'trophy', 'trot', 'trouble', 'trough', 'trounce', 'troupe', 'trousers', 'trout', 'trowel', 'truce', 'truck',
+            'trudge', 'true', 'truly', 'trump', 'trumpet', 'truncate', 'trunk', 'truss', 'trust', 'truth', 'try', 'tub',
+            'tube', 'tuck', 'tuff', 'tuft', 'tug', 'tumble', 'tumor', 'tumult', 'tune', 'tungsten', 'tunic', 'tunnel',
+            'turban', 'turbid', 'turbulent', 'turf', 'turkey', 'turmoil', 'turn', 'turnip', 'turret', 'turtle', 'tusk',
+            'tutor', 'tweed', 'twelve', 'twenty', 'twice', 'twig', 'twilight', 'twin', 'twine', 'twinkle', 'twirl', 'twist',
+            'two', 'tycoon', 'type', 'typhoon', 'typical', 'tyrant', 'ubiquitous', 'udder', 'ugly', 'ulcer', 'ultimate',
+            'umbrella', 'umpire', 'un', 'unable', 'unassuming', 'unavoidable', 'unbearable', 'unbroken', 'uncanny', 'uncertain',
+            'uncle', 'uncommon', 'unconscious', 'under', 'underdog', 'undergo', 'undermine', 'underneath', 'understand',
+            'undertake', 'underwear', 'undisputed', 'undo', 'undress', 'uneasy', 'unexpected', 'unfair', 'unfit', 'unfold',
+            'unfortunate', 'unhappy', 'uniform', 'unify', 'union', 'unique', 'unit', 'unite', 'unity', 'universal', 'universe',
+            'unjust', 'unkind', 'unknown', 'unless', 'unlike', 'unlimited', 'unload', 'unlock', 'unlucky', 'unnecessary',
+            'unpleasant', 'unravel', 'unrest', 'unruly', 'unsafe', 'unseen', 'unsteady', 'unsuccessful', 'until', 'unusual',
+            'unveil', 'unwieldy', 'unwise', 'unworthy', 'unyielding', 'up', 'upbeat', 'upcoming', 'update', 'upgrade',
+            'upheaval', 'uphold', 'upon', 'upper', 'uproar', 'upset', 'upshot', 'uptight', 'uptown', 'upward', 'urban',
+            'urchin', 'urge', 'urgent', 'urine', 'urn', 'us', 'usage', 'use', 'used', 'useful', 'user', 'usual', 'usurp',
+            'utensil', 'utility', 'utilize', 'utmost', 'utter', 'vacant', 'vacate', 'vacation', 'vaccinate', 'vague', 'vain',
+            'valet', 'valiant', 'valid', 'valley', 'valor', 'valuable', 'value', 'vamp', 'vampire', 'van', 'vandal', 'vanish',
+            'vanity', 'vapor', 'variable', 'variation', 'varied', 'varies', 'variety', 'various', 'varnish', 'vary', 'vase',
+            'vast', 'vault', 'vaunt', 'veal', 'vector', 'veer', 'vegetable', 'vegetate', 'vehemence', 'vehicle', 'veil',
+            'vein', 'velocity', 'velvet', 'venal', 'vend', 'vendetta', 'vendor', 'veneer', 'venerable', 'venerate', 'vengeance',
+            'venial', 'venison', 'venom', 'vent', 'ventilate', 'venture', 'venue', 'verandah', 'verb', 'verbal', 'verbose',
+            'verdict', 'verge', 'verify', 'verily', 'veritable', 'verity', 'vernacular', 'versatile', 'verse', 'version',
+            'versus', 'vertical', 'very', 'vessel', 'vest', 'veteran', 'veto', 'vex', 'viable', 'vial', 'vibe', 'vibrant',
+            'vibrate', 'vicar', 'vice', 'vicinity', 'vicious', 'victim', 'victor', 'victory', 'video', 'view', 'vigil',
+            'vigilant', 'vigor', 'vile', 'villa', 'village', 'villain', 'vim', 'vindicate', 'vine', 'vinegar', 'vineyard',
+            'violate', 'violent', 'violet', 'violin', 'virgin', 'virtual', 'virtue', 'virtuoso', 'virulent', 'virus', 'visa',
+            'visage', 'viscount', 'vise', 'visible', 'vision', 'visit', 'visitor', 'vista', 'visual', 'vital', 'vitality',
+            'vitamin', 'vivacious', 'vivid', 'vixen', 'vocabulary', 'vocal', 'vociferous', 'vodka', 'vogue', 'voice', 'void',
+            'volatile', 'volcano', 'volition', 'volley', 'volt', 'volume', 'voluntary', 'volunteer', 'voluptuous', 'vomit',
+            'vortex', 'vote', 'vouch', 'vow', 'voyage', 'vulgar', 'vulnerable', 'vulture', 'wacky', 'wade', 'wafer', 'wag',
+            'wage', 'wagon', 'wait', 'waiver', 'wake', 'wale', 'walk', 'wall', 'walnut', 'waltz', 'wand', 'wander', 'wane',
+            'want', 'war', 'ward', 'warm', 'warn', 'warp', 'warrant', 'warrior', 'wart', 'wary', 'wash', 'wasp', 'waste',
+            'watch', 'water', 'watt', 'wave', 'wax', 'way', 'weak', 'weal', 'wealth', 'weapon', 'wear', 'weary', 'weasel',
+            'weather', 'weave', 'web', 'wed', 'wedge', 'weed', 'week', 'weep', 'weigh', 'weight', 'weird', 'welcome', 'weld',
+            'welfare', 'well', 'wen', 'west', 'wet', 'whale', 'wharf', 'what', 'wheat', 'wheel', 'when', 'where', 'whet',
+            'which', 'whiff', 'while', 'whim', 'whine', 'whip', 'whirl', 'whisk', 'whisper', 'whistle', 'white', 'whittle',
+            'whiz', 'who', 'whole', 'wholesale', 'whom', 'whose', 'why', 'wick', 'wide', 'widow', 'width', 'wield', 'wife',
+            'wild', 'will', 'wilt', 'wily', 'win', 'wind', 'window', 'wine', 'wing', 'wink', 'winner', 'winter', 'wipe',
+            'wire', 'wise', 'wish', 'wisp', 'wit', 'witch', 'with', 'withdraw', 'wither', 'within', 'without', 'witness',
+            'witty', 'woe', 'wolf', 'woman', 'womb', 'wonder', 'wood', 'wool', 'word', 'wore', 'work', 'world', 'worm',
+            'worry', 'worse', 'worship', 'worst', 'worth', 'would', 'wound', 'woven', 'wrangle', 'wrap', 'wrath', 'wreak',
+            'wreck', 'wrest', 'wrestle', 'wretch', 'wring', 'wrinkle', 'wrist', 'write', 'wrong', 'wrote', 'wrung', 'wry',
+            'xenophobia', 'xerox', 'xylem', 'yacht', 'yard', 'yarn', 'yawn', 'year', 'yeast', 'yell', 'yellow', 'yelp',
+            'yen', 'yes', 'yesterday', 'yet', 'yew', 'yield', 'yip', 'yoke', 'yolk', 'you', 'young', 'your', 'youth',
+            'yowl', 'zany', 'zeal', 'zealous', 'zebra', 'zenith', 'zero', 'zest', 'zigzag', 'zinc', 'zip', 'zipper', 'zodiac',
+            'zombie', 'zone', 'zoo', 'zoology', 'zoom'
+        ];
+
+        // Filter to 3–6 letters
+        const ALL_WORDS = RAW_WORDS.filter(w => w.length >= 3 && w.length <= 6);
+        const WORD_SET = new Set(ALL_WORDS);
+
+        // ============================================================
+        //  LEVEL CONFIG – 4 levels, 3–6 letters, 10 words each, 2min
+        // ============================================================
+        const LEVELS = [
+            { level: 1, wordLength: 3, wordsNeeded: 10, timeSeconds: 120 },
+            { level: 2, wordLength: 4, wordsNeeded: 10, timeSeconds: 120 },
+            { level: 3, wordLength: 5, wordsNeeded: 10, timeSeconds: 120 },
+            { level: 4, wordLength: 6, wordsNeeded: 10, timeSeconds: 120 },
+        ];
+        const MAX_LEVEL = LEVELS.length;
+        const TURN_TIME_LIMIT = 30;
+
+        // ============================================================
+        //  GAME STATE
+        // ============================================================
+        const state = {
+            levelIndex: 0,
+            wordsCompleted: 0,
+            currentWord: '',
+            playerScore: 0,
+            computerScore: 0,
+            moves: 0,
+            isPlayerTurn: true,
+            gameOver: false,
+            usedWords: [],
+            message: '',
+            messageType: 'info',
+            hint: null,
+            isProcessing: false,
+            levelTimeLeft: 120,
+            turnTimeLeft: 30,
+            turnTimerActive: false,
+            timerInterval: null,
+            levelComplete: false,
+            allLevelsComplete: false,
+        };
+
+        // ============================================================
+        //  DOM REFS
+        // ============================================================
+        const $ = id => document.getElementById(id);
+        const wordDisplay = $('wordDisplay');
+        const turnIndicator = $('turnIndicator');
+        const turnTimerDisplay = $('turnTimerDisplay');
+        const levelTimerDisplay = $('levelTimerDisplay');
+        const messageEl = $('message');
+        const wordInput = $('wordInput');
+        const submitBtn = $('submitBtn');
+        const hintBtn = $('hintBtn');
+        const playerScoreEl = $('playerScore');
+        const computerScoreEl = $('computerScore');
+        const moveCounter = $('moveCounter');
+        const usedWordsEl = $('usedWords');
+        const gameOverOverlay = $('gameOverOverlay');
+        const gameOverTitle = $('gameOverTitle');
+        const gameOverSub = $('gameOverSub');
+        const restartBtn = $('restartBtn');
+        const levelBadge = $('levelBadge');
+        const progressCount = $('progressCount');
+        const progressFill = $('progressFill');
+        const levelStatus = $('levelStatus');
+        const celebration = $('celebration');
+        const levelNum = $('levelNum');
+        const levelLetters = $('levelLetters');
+
+        // ============================================================
+        //  AUDIO – Ticking sound
+        // ============================================================
+        let audioCtx = null;
+
+        function playTick(high = false) {
+            try {
+                if (!audioCtx) {
+                    audioCtx = new(window.AudioContext || window.webkitAudioContext)();
+                }
+                const osc = audioCtx.createOscillator();
+                const gain = audioCtx.createGain();
+                osc.connect(gain);
+                gain.connect(audioCtx.destination);
+                osc.type = 'sine';
+                osc.frequency.value = high ? 1200 : 800;
+                gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.08);
+                osc.start(audioCtx.currentTime);
+                osc.stop(audioCtx.currentTime + 0.08);
+            } catch (e) { /* silent fail */ }
+        }
+
+        // ============================================================
+        //  HELPERS
+        // ============================================================
+        function isWord(word) { return WORD_SET.has(word.toLowerCase()); }
+
+        function getWordsOfLength(len) { return ALL_WORDS.filter(w => w.length === len); }
+
+        function getNeighbors(word) {
+            const result = [];
+            const lower = word.toLowerCase();
+            const letters = 'abcdefghijklmnopqrstuvwxyz';
+            for (let i = 0; i < lower.length; i++) {
+                for (const ch of letters) {
+                    if (ch === lower[i]) continue;
+                    const candidate = lower.slice(0, i) + ch + lower.slice(i + 1);
+                    if (candidate.length <= 6 && isWord(candidate) && candidate !== lower) {
+                        result.push(candidate);
+                    }
+                }
+            }
+            return result;
+        }
+
+        function getValidMoves(word, usedSet) {
+            const neighbors = getNeighbors(word);
+            return neighbors.filter(w => !usedSet.has(w) && w !== word);
+        }
+
+        function getLevelConfig() { return LEVELS[state.levelIndex]; }
+        function getWordLength() { return getLevelConfig().wordLength; }
+        function getWordsNeeded() { return getLevelConfig().wordsNeeded; }
+        function getLevelTimeLimit() { return getLevelConfig().timeSeconds; }
+
+        // ============================================================
+        //  TIMER MANAGEMENT
+        // ============================================================
+        function startTimers() {
+            clearTimer();
+            state.levelTimeLeft = getLevelTimeLimit();
+            state.turnTimeLeft = TURN_TIME_LIMIT;
+            state.turnTimerActive = state.isPlayerTurn && !state.gameOver && !state.levelComplete;
+            updateTimerDisplays();
+            state.timerInterval = setInterval(() => {
+                state.levelTimeLeft--;
+                if (state.turnTimerActive) {
+                    state.turnTimeLeft--;
+                }
+                updateTimerDisplays();
+
+                const turnWarning = state.turnTimerActive && state.turnTimeLeft <= 5;
+                const levelWarning = state.levelTimeLeft <= 10;
+                playTick(turnWarning || levelWarning);
+
+                if (state.levelTimeLeft <= 0) {
+                    clearTimer();
+                    if (!state.gameOver && !state.levelComplete) {
+                        setGameOver('⏰ Level Time\'s Up!', 'You ran out of level time.');
+                        setMessage('⌛ Level time expired!', 'game-over');
+                    }
+                    return;
+                }
+
+                if (state.turnTimerActive && state.turnTimeLeft <= 0) {
+                    clearTimer();
+                    if (!state.gameOver && !state.levelComplete && state.isPlayerTurn) {
+                        setGameOver('⏰ Turn Time\'s Up!', 'You took too long to move.');
+                        setMessage('⌛ 30 seconds per turn!', 'game-over');
+                    }
+                }
+            }, 1000);
+        }
+
+        function clearTimer() {
+            if (state.timerInterval) {
+                clearInterval(state.timerInterval);
+                state.timerInterval = null;
+            }
+        }
+
+        function updateTimerDisplays() {
+            const mins = Math.floor(state.levelTimeLeft / 60);
+            const secs = state.levelTimeLeft % 60;
+            levelTimerDisplay.textContent = `⏱️ ${mins}:${secs.toString().padStart(2, '0')}`;
+            turnTimerDisplay.textContent = state.turnTimeLeft;
+            if (state.turnTimeLeft <= 5) {
+                turnTimerDisplay.classList.add('warning');
+            } else {
+                turnTimerDisplay.classList.remove('warning');
+            }
+        }
+
+        function resetTurnTimer() {
+            state.turnTimeLeft = TURN_TIME_LIMIT;
+            state.turnTimerActive = state.isPlayerTurn && !state.gameOver && !state.levelComplete;
+            updateTimerDisplays();
+        }
+
+        // ============================================================
+        //  RENDER
+        // ============================================================
+        function renderWord(word, highlightIndex = null, highlightType = null) {
+            wordDisplay.innerHTML = '';
+            const chars = word.split('');
+            chars.forEach((ch, idx) => {
+                const tile = document.createElement('span');
+                tile.className = 'letter-tile';
+                tile.textContent = ch.toUpperCase();
+                if (highlightIndex !== null && idx === highlightIndex) {
+                    tile.classList.add(highlightType === 'remove' ? 'highlight-remove' : 'highlight-add');
+                }
+                if (state.isPlayerTurn && !state.gameOver && !state.isProcessing && !state.levelComplete) {
+                    tile.classList.add('clickable');
+                    tile.addEventListener('click', () => {
+                        const current = state.currentWord;
+                        const newWord = current.slice(0, idx) + current.slice(idx + 1);
+                        wordInput.value = newWord;
+                        wordInput.focus();
+                        renderWord(state.currentWord, idx, 'remove');
+                        setMessage('Type a letter to insert', 'info');
+                    });
+                }
+                wordDisplay.appendChild(tile);
+            });
+        }
+
+        function renderUsedWords() {
+            const words = state.usedWords;
+            usedWordsEl.innerHTML = '<span class="used-words-label">📝 used:</span>';
+            const displayWords = words.slice(-12);
+            displayWords.forEach((w, i) => {
+                const tag = document.createElement('span');
+                tag.className = 'used-word-tag';
+                if (i === displayWords.length - 1) tag.classList.add('current');
+                tag.textContent = w;
+                usedWordsEl.appendChild(tag);
+            });
+        }
+
+        function updateStats() {
+            playerScoreEl.textContent = state.playerScore;
+            computerScoreEl.textContent = state.computerScore;
+            moveCounter.textContent = `Moves ${state.moves}`;
+        }
+
+        function updateLevelUI() {
+            const config = getLevelConfig();
+            levelNum.textContent = config.level;
+            levelLetters.textContent = config.wordLength;
+            // Update progress
+            const done = state.wordsCompleted;
+            const needed = getWordsNeeded();
+            progressCount.textContent = `${done} / ${needed}`;
+            const pct = Math.min(100, (done / needed) * 100);
+            progressFill.style.width = `${pct}%`;
+            levelStatus.textContent = `Level ${config.level}`;
+            // Re-fetch timer span for level timer (updated via interval)
+        }
+
+        function updateTurn() {
+            if (state.gameOver) {
+                turnIndicator.textContent = '⏹ Game Over';
+                turnIndicator.className = 'turn-indicator';
+                return;
+            }
+            if (state.levelComplete) {
+                turnIndicator.textContent = '🎉 Level Complete!';
+                turnIndicator.className = 'turn-indicator';
+                return;
+            }
+            turnIndicator.textContent = state.isPlayerTurn ? '● Your Turn' : '○ Computer Thinking…';
+            turnIndicator.className = 'turn-indicator ' + (state.isPlayerTurn ? 'player-turn' : 'computer-turn');
+        }
+
+        function setMessage(text, type = 'info') {
+            state.message = text;
+            state.messageType = type;
+            messageEl.textContent = text;
+            messageEl.className = 'message ' + type;
+        }
+
+        function setGameOver(title, sub) {
+            state.gameOver = true;
+            clearTimer();
+            gameOverOverlay.classList.add('visible');
+            celebration.classList.remove('visible');
+            gameOverTitle.textContent = title;
+            gameOverSub.textContent = sub;
+            turnIndicator.textContent = '⏹ Game Over';
+            turnIndicator.className = 'turn-indicator';
+            wordInput.disabled = true;
+            submitBtn.disabled = true;
+            hintBtn.disabled = true;
+            turnTimerDisplay.textContent = '0';
+            turnTimerDisplay.classList.remove('warning');
+            levelTimerDisplay.textContent = '⏱️ 0:00';
+        }
+
+        function clearGameOver() {
+            gameOverOverlay.classList.remove('visible');
+            celebration.classList.remove('visible');
+            wordInput.disabled = false;
+            submitBtn.disabled = false;
+            hintBtn.disabled = false;
+        }
+
+        // ============================================================
+        //  LEVEL MANAGEMENT
+        // ============================================================
+        function startLevel() {
+            const config = getLevelConfig();
+            const length = config.wordLength;
+            const words = getWordsOfLength(length);
+
+            let seed = words[Math.floor(Math.random() * words.length)];
+            let attempts = 0;
+            while (attempts < 50) {
+                const neighbors = getNeighbors(seed);
+                if (neighbors.length > 0) break;
+                seed = words[Math.floor(Math.random() * words.length)];
+                attempts++;
+            }
+
+            state.currentWord = seed;
+            state.wordsCompleted = 0;
+            state.usedWords = [seed];
+            state.isPlayerTurn = true;
+            state.levelComplete = false;
+            state.gameOver = false;
+            state.isProcessing = false;
+            state.hint = null;
+
+            clearGameOver();
+            clearTimer();
+            wordInput.value = '';
+            wordInput.disabled = false;
+            submitBtn.disabled = false;
+            hintBtn.disabled = false;
+
+            renderWord(seed);
+            renderUsedWords();
+            updateStats();
+            updateLevelUI();
+            updateTurn();
+            state.levelTimeLeft = getLevelTimeLimit();
+            state.turnTimeLeft = TURN_TIME_LIMIT;
+            state.turnTimerActive = true;
+            startTimers();
+            setMessage(`Level ${config.level} – ${length}‑letter words. You have 30s per turn!`, 'info');
+            wordInput.focus();
+        }
+
+        function completeLevel() {
+            state.levelComplete = true;
+            clearTimer();
+            setMessage('🎉 Level Complete!', 'level-up');
+
+            if (state.levelIndex >= MAX_LEVEL - 1) {
+                state.allLevelsComplete = true;
+                state.gameOver = true;
+                gameOverOverlay.classList.remove('visible');
+                celebration.classList.add('visible');
+                turnIndicator.textContent = '🏆 You Win!';
+                turnIndicator.className = 'turn-indicator';
+                wordInput.disabled = true;
+                submitBtn.disabled = true;
+                hintBtn.disabled = true;
+                setMessage('🌟 All levels complete – you\'re a champion!', 'game-over');
+                return;
+            }
+
+            state.isProcessing = true;
+            setTimeout(() => {
+                state.levelIndex++;
+                state.isProcessing = false;
+                startLevel();
+            }, 2000);
+        }
+
+        // ============================================================
+        //  GAME LOGIC
+        // ============================================================
+        function makePlayerMove(newWord) {
+            if (state.gameOver || !state.isPlayerTurn || state.isProcessing || state.levelComplete) return false;
+
+            const current = state.currentWord;
+            const lower = newWord.toLowerCase().trim();
+
+            if (lower.length !== current.length) {
+                setMessage(`Word must be ${current.length} letters`, 'error');
+                return false;
+            }
+            if (lower === current) {
+                setMessage('Must be different!', 'error');
+                return false;
+            }
+            if (!isWord(lower)) {
+                setMessage(`"${lower}" is not a valid word`, 'error');
+                return false;
+            }
+
+            let diffCount = 0;
+            for (let i = 0; i < current.length; i++) {
+                if (current[i] !== lower[i]) diffCount++;
+            }
+            if (diffCount !== 1) {
+                setMessage('Change exactly one letter', 'error');
+                return false;
+            }
+            if (state.usedWords.includes(lower)) {
+                setMessage(`"${lower}" already used`, 'error');
+                return false;
+            }
+
+            state.currentWord = lower;
+            state.usedWords.push(lower);
+            state.playerScore++;
+            state.moves++;
+            state.wordsCompleted++;
+            state.isPlayerTurn = false;
+            state.hint = null;
+            state.turnTimerActive = false;
+
+            renderWord(lower);
+            renderUsedWords();
+            updateStats();
+            updateLevelUI();
+            updateTurn();
+            wordInput.value = '';
+            setMessage(`✅ "${lower}" — Great!`, 'success');
+
+            if (state.wordsCompleted >= getWordsNeeded()) {
+                completeLevel();
+                return true;
+            }
+
+            state.isProcessing = true;
+            setTimeout(() => {
+                makeComputerMove();
+            }, 700);
+
+            return true;
+        }
+
+        function makeComputerMove() {
+            if (state.gameOver || state.levelComplete) {
+                state.isProcessing = false;
+                return;
+            }
+
+            const current = state.currentWord;
+            const usedSet = new Set(state.usedWords);
+            const moves = getValidMoves(current, usedSet);
+
+            if (moves.length === 0) {
+                state.isProcessing = false;
+                const length = getWordLength();
+                const words = getWordsOfLength(length);
+                let newSeed = words.find(w => !state.usedWords.includes(w) && getValidMoves(w, usedSet).length > 0);
+                if (!newSeed) {
+                    setMessage('🎉 Computer stuck! Level complete!', 'level-up');
+                    completeLevel();
+                    return;
+                }
+                state.currentWord = newSeed;
+                state.usedWords.push(newSeed);
+                state.playerScore++;
+                state.wordsCompleted++;
+                state.isPlayerTurn = true;
+                state.isProcessing = false;
+                renderWord(newSeed);
+                renderUsedWords();
+                updateStats();
+                updateLevelUI();
+                updateTurn();
+                state.turnTimeLeft = TURN_TIME_LIMIT;
+                state.turnTimerActive = true;
+                setMessage(`✨ Computer couldn't move! New word: "${newSeed}"`, 'info');
+                if (state.wordsCompleted >= getWordsNeeded()) {
+                    completeLevel();
+                }
+                return;
+            }
+
+            let bestMoves = moves;
+            let bestScore = -1;
+            for (const m of moves) {
+                const nextUsed = new Set(usedSet);
+                nextUsed.add(m);
+                const nextMoves = getValidMoves(m, nextUsed);
+                const score = nextMoves.length;
+                if (score > bestScore) { bestScore = score; bestMoves = [m]; }
+                else if (score === bestScore) bestMoves.push(m);
+            }
+            const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+            state.currentWord = chosen;
+            state.usedWords.push(chosen);
+            state.computerScore++;
+            state.moves++;
+            state.isPlayerTurn = true;
+            state.isProcessing = false;
+            state.hint = null;
+            state.turnTimerActive = true;
+            state.turnTimeLeft = TURN_TIME_LIMIT;
+
+            renderWord(chosen);
+            renderUsedWords();
+            updateStats();
+            updateLevelUI();
+            updateTurn();
+            setMessage(`🤖 Computer plays "${chosen.toUpperCase()}"`, 'info');
+
+            const usedSet2 = new Set(state.usedWords);
+            const playerMoves = getValidMoves(chosen, usedSet2);
+            if (playerMoves.length === 0 && state.wordsCompleted < getWordsNeeded()) {
+                const length = getWordLength();
+                const words = getWordsOfLength(length);
+                let newSeed = words.find(w => !state.usedWords.includes(w) && getValidMoves(w, usedSet2).length > 0);
+                if (!newSeed) {
+                    setMessage('😔 No moves available. Try again!', 'error');
+                    setGameOver('💻 Computer Wins!', 'No moves available.');
+                    return;
+                }
+                state.currentWord = newSeed;
+                state.usedWords.push(newSeed);
+                state.playerScore++;
+                state.wordsCompleted++;
+                renderWord(newSeed);
+                renderUsedWords();
+                updateStats();
+                updateLevelUI();
+                setMessage(`✨ New word for you: "${newSeed}"`, 'info');
+                if (state.wordsCompleted >= getWordsNeeded()) {
+                    completeLevel();
+                    return;
+                }
+                state.turnTimeLeft = TURN_TIME_LIMIT;
+                state.turnTimerActive = true;
+                wordInput.focus();
+                return;
+            }
+
+            wordInput.focus();
+        }
+
+        // ============================================================
+        //  HINT
+        // ============================================================
+        function giveHint() {
+            if (state.gameOver || !state.isPlayerTurn || state.isProcessing || state.levelComplete) return;
+            const usedSet = new Set(state.usedWords);
+            const moves = getValidMoves(state.currentWord, usedSet);
+            if (moves.length === 0) {
+                setMessage('No moves available!', 'error');
+                return;
+            }
+            const hint = moves[Math.floor(Math.random() * moves.length)];
+            setMessage(`💡 Try "${hint.toUpperCase()}"`, 'info');
+            let diffIdx = -1;
+            for (let i = 0; i < state.currentWord.length; i++) {
+                if (state.currentWord[i] !== hint[i]) { diffIdx = i; break; }
+            }
+            if (diffIdx !== -1) {
+                renderWord(state.currentWord, diffIdx, 'add');
+                setTimeout(() => renderWord(state.currentWord), 800);
+            }
+        }
+
+        // ============================================================
+        //  EVENT HANDLERS
+        // ============================================================
+        submitBtn.addEventListener('click', () => {
+            const val = wordInput.value.trim();
+            if (!val) { setMessage('Please enter a word', 'error'); return; }
+            makePlayerMove(val);
+        });
+
+        wordInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') { e.preventDefault(); submitBtn.click(); }
+            if (e.key.length === 1 || e.key === 'Backspace') {
+                renderWord(state.currentWord);
+            }
+        });
+
+        hintBtn.addEventListener('click', giveHint);
+
+        restartBtn.addEventListener('click', () => {
+            state.levelIndex = 0;
+            state.playerScore = 0;
+            state.computerScore = 0;
+            state.moves = 0;
+            state.allLevelsComplete = false;
+            startLevel();
+        });
+
+        // ============================================================
+        //  INIT
+        // ============================================================
+        startLevel();
+        console.log('⚡ Letter Rush – Colourful Edition loaded!');
+        console.log(`📚 ${WORD_SET.size} words (3-6 letters)`);
+        console.log(`⏱️ ${TURN_TIME_LIMIT}s per turn, 2 min per level`);
+    </script>
+</body>
+</html>
